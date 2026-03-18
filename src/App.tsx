@@ -14,30 +14,34 @@ import BlogDetailPage from "@/pages/public/BlogDetailPage";
 import ContactPage from "@/pages/public/ContactPage";
 import NotFoundPage from "@/pages/public/NotFoundPage";
 
-// Admin
-import AdminLoginPage from "@/pages/admin/AdminLoginPage";
-import AdminLayout from "@/pages/admin/AdminLayout";
+// Admin — layout
+import AdminLoginPage from "@/pages/admin/layout/AdminLoginPage";
+import AdminLayout from "@/pages/admin/layout/AdminLayout";
+
+// Admin — dashboard & misc
 import DashboardPage from "@/pages/admin/DashboardPage";
-import {
-  SiteSettingsPage,
-  ThemeSettingsPage,
-  LanguageSettingsPage,
-  SEOSettingsPage,
-} from "@/pages/admin/SettingsPages";
-import {
-  HeroAdminPage,
-  AboutAdminPage,
-  ResumeAdminPage,
-  ContactSettingsAdminPage,
-} from "@/pages/admin/ContentAdminPages";
 import SectionVisibilityPage from "@/pages/admin/SectionVisibilityPage";
-import NavigationPage from "@/pages/admin/NavigationPage";
-import BlogManagerPage from "@/pages/admin/BlogManagerPage";
-import ProjectsManagerPage from "@/pages/admin/ProjectsManagerPage";
 import ContactSubmissionsPage from "@/pages/admin/ContactSubmissionsPage";
-import SkillsManagerPage from "@/pages/admin/SkillsManagerPage";
-import SocialLinksManagerPage from "@/pages/admin/SocialLinksManagerPage";
-import ExperienceManagerPage from "@/pages/admin/ExperienceManagerPage";
+
+// Admin — content
+import HeroPage from "@/pages/admin/content/HeroPage";
+import AboutAdminPage from "@/pages/admin/content/AboutPage";
+import ResumeAdminPage from "@/pages/admin/content/ResumeAdminPage";
+import ContactSettingsPage from "@/pages/admin/content/ContactSettingsPage";
+
+// Admin — settings
+import SiteSettingsPage from "@/pages/admin/settings/SiteSettingsPage";
+import ThemeSettingsPage from "@/pages/admin/settings/ThemeSettingsPage";
+import LanguageSettingsPage from "@/pages/admin/settings/LanguageSettingsPage";
+import SEOSettingsPage from "@/pages/admin/settings/SEOSettingsPage";
+
+// Admin — managers
+import SkillsManagerPage from "@/pages/admin/managers/SkillsManagerPage";
+import ProjectsManagerPage from "@/pages/admin/managers/ProjectsManagerPage";
+import ExperienceManagerPage from "@/pages/admin/managers/ExperienceManagerPage";
+import BlogManagerPage from "@/pages/admin/managers/BlogManagerPage";
+import SocialLinksManagerPage from "@/pages/admin/managers/SocialLinksManagerPage";
+import NavigationPage from "@/pages/admin/managers/NavigationPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,7 +77,7 @@ export default function App() {
             <Route index element={<DashboardPage />} />
 
             {/* Content */}
-            <Route path="hero" element={<HeroAdminPage />} />
+            <Route path="hero" element={<HeroPage />} />
             <Route path="about" element={<AboutAdminPage />} />
             <Route path="skills" element={<SkillsManagerPage />} />
             <Route path="social-links" element={<SocialLinksManagerPage />} />
@@ -96,10 +100,7 @@ export default function App() {
             <Route path="settings/seo" element={<SEOSettingsPage />} />
 
             {/* Contact */}
-            <Route
-              path="contact/settings"
-              element={<ContactSettingsAdminPage />}
-            />
+            <Route path="contact/settings" element={<ContactSettingsPage />} />
             <Route
               path="contact/submissions"
               element={<ContactSubmissionsPage />}
