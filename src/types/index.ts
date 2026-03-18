@@ -146,6 +146,7 @@ export interface Experience {
   start_date: string;
   end_date?: string | null;
   is_current: boolean;
+  is_visible: boolean;
   description: LocalizedString;
   achievements: string[];
 }

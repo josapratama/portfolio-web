@@ -10,6 +10,8 @@ import {
   ChevronUp,
   X,
   Briefcase,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
 import type { Experience } from "@/types";
@@ -33,6 +35,7 @@ interface ExpForm {
   start_date: string;
   end_date: string;
   is_current: boolean;
+  is_visible: boolean;
   desc_en: string;
   desc_id: string;
   achievements: string;
@@ -49,6 +52,7 @@ const BLANK: ExpForm = {
   start_date: "",
   end_date: "",
   is_current: false,
+  is_visible: true,
   desc_en: "",
   desc_id: "",
   achievements: "",
@@ -63,7 +67,7 @@ function toPayload(f: ExpForm) {
     start_date: f.start_date,
     end_date: f.is_current ? null : f.end_date || null,
     is_current: f.is_current,
-    is_visible: true,
+    is_visible: f.is_visible,
     sort_order: 0,
     description: { en: f.desc_en, id: f.desc_id || f.desc_en },
     achievements: f.achievements
@@ -83,9 +87,10 @@ function fromExperience(exp: Experience): ExpForm {
     loc_en: exp.location?.en || "",
     loc_id: exp.location?.id || "",
     employment_type: exp.employment_type || "Full-time",
-    start_date: exp.start_date?.slice(0, 10) || "",
-    end_date: exp.end_date?.slice(0, 10) || "",
+    start_date: exp.start_date ? exp.start_date.slice(0, 10) : "",
+    end_date: exp.end_date ? exp.end_date.slice(0, 10) : "",
     is_current: exp.is_current ?? false,
+    is_visible: exp.is_visible ?? true,
     desc_en: exp.description?.en || "",
     desc_id: exp.description?.id || "",
     achievements: ach.join("\n"),
@@ -154,12 +159,75 @@ function LangPill({
   );
 }
 
+function Toggle({
+  value,
+  onChange,
+  label,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        cursor: "pointer",
+      }}
+    >
+      <div
+        onClick={() => onChange(!value)}
+        style={{
+          position: "relative",
+          width: 36,
+          height: 20,
+          borderRadius: 999,
+          background: value ? "var(--color-accent)" : "var(--color-border)",
+          transition: "background 0.2s",
+          flexShrink: 0,
+          cursor: "pointer",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 2,
+            left: value ? 18 : 2,
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            background: "white",
+            transition: "left 0.2s",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          }}
+        />
+      </div>
+      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
+        {label}
+      </span>
+    </label>
+  );
+}
+
 const cardStyle = {
   background: "var(--color-surface-card)",
   border: "1px solid var(--color-border)",
   borderRadius: 16,
   backdropFilter: "blur(16px)",
   overflow: "hidden" as const,
+};
+const btnStyle = {
+  padding: 7,
+  borderRadius: 7,
+  border: "1px solid var(--color-border)",
+  background: "transparent",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  color: "var(--color-text-muted)",
+  transition: "all 0.15s",
 };
 
 export default function ExperienceManagerPage() {
@@ -215,6 +283,17 @@ export default function ExperienceManagerPage() {
       toast.success(uiLang === "en" ? "Deleted" : "Dihapus");
     },
   });
+
+  // Quick visibility toggle without opening the form
+  const toggleVisible = (exp: Experience) => {
+    adminAPI
+      .updateExperience(exp.id, {
+        ...toPayload(fromExperience(exp)),
+        is_visible: !exp.is_visible,
+      })
+      .then(() => invalidate())
+      .catch(() => toast.error("Failed"));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,6 +358,7 @@ export default function ExperienceManagerPage() {
         )}
       </div>
 
+      {/* ── Form ── */}
       {showForm && (
         <div style={{ ...cardStyle, padding: "clamp(20px, 3vw, 28px)" }}>
           <div
@@ -430,52 +510,32 @@ export default function ExperienceManagerPage() {
               </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  onClick={() => set("is_current", !form.is_current)}
-                  style={{
-                    position: "relative",
-                    width: 36,
-                    height: 20,
-                    borderRadius: 999,
-                    background: form.is_current
-                      ? "var(--color-accent)"
-                      : "var(--color-border)",
-                    transition: "background 0.2s",
-                    flexShrink: 0,
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 2,
-                      left: form.is_current ? 18 : 2,
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      background: "white",
-                      transition: "left 0.2s",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                </div>
-                <span
-                  style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
-                >
-                  {uiLang === "en"
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 20,
+                marginBottom: 16,
+              }}
+            >
+              <Toggle
+                value={form.is_current}
+                onChange={(v) => set("is_current", v)}
+                label={
+                  uiLang === "en"
                     ? "Currently working here"
-                    : "Masih bekerja di sini"}
-                </span>
-              </label>
+                    : "Masih bekerja di sini"
+                }
+              />
+              <Toggle
+                value={form.is_visible}
+                onChange={(v) => set("is_visible", v)}
+                label={
+                  uiLang === "en"
+                    ? "Visible on public site"
+                    : "Tampil di situs publik"
+                }
+              />
             </div>
 
             <div style={{ marginBottom: 16 }}>
@@ -564,6 +624,7 @@ export default function ExperienceManagerPage() {
         </div>
       )}
 
+      {/* ── List ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {(experiences || []).length === 0 ? (
           <div
@@ -600,7 +661,10 @@ export default function ExperienceManagerPage() {
           </div>
         ) : (
           (experiences || []).map((exp) => (
-            <div key={exp.id} style={cardStyle}>
+            <div
+              key={exp.id}
+              style={{ ...cardStyle, opacity: exp.is_visible ? 1 : 0.6 }}
+            >
               <div
                 style={{
                   display: "flex",
@@ -609,6 +673,7 @@ export default function ExperienceManagerPage() {
                   padding: "16px 18px",
                 }}
               >
+                {/* Icon */}
                 <div
                   style={{
                     width: 40,
@@ -625,6 +690,8 @@ export default function ExperienceManagerPage() {
                 >
                   <Briefcase size={16} />
                 </div>
+
+                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
@@ -642,7 +709,7 @@ export default function ExperienceManagerPage() {
                         color: "var(--color-text-primary)",
                       }}
                     >
-                      {exp.role.en}
+                      {exp.role?.en}
                     </span>
                     {exp.is_current && (
                       <span
@@ -650,6 +717,20 @@ export default function ExperienceManagerPage() {
                         style={{ fontSize: 10, padding: "2px 8px" }}
                       >
                         {uiLang === "en" ? "Current" : "Sekarang"}
+                      </span>
+                    )}
+                    {!exp.is_visible && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          padding: "2px 8px",
+                          borderRadius: 20,
+                          background: "rgba(148,163,184,0.1)",
+                          color: "var(--color-text-muted)",
+                          border: "1px solid var(--color-border)",
+                        }}
+                      >
+                        {uiLang === "en" ? "Hidden" : "Tersembunyi"}
                       </span>
                     )}
                   </div>
@@ -660,7 +741,7 @@ export default function ExperienceManagerPage() {
                       fontWeight: 500,
                     }}
                   >
-                    {exp.organization.en}
+                    {exp.organization?.en}
                   </p>
                   <p
                     style={{
@@ -678,6 +759,8 @@ export default function ExperienceManagerPage() {
                     {exp.location?.en ? ` · ${exp.location.en}` : ""}
                   </p>
                 </div>
+
+                {/* Action buttons */}
                 <div
                   style={{
                     display: "flex",
@@ -686,22 +769,51 @@ export default function ExperienceManagerPage() {
                     flexShrink: 0,
                   }}
                 >
+                  {/* Visibility toggle */}
+                  <button
+                    type="button"
+                    onClick={() => toggleVisible(exp)}
+                    title={
+                      exp.is_visible
+                        ? uiLang === "en"
+                          ? "Hide"
+                          : "Sembunyikan"
+                        : uiLang === "en"
+                          ? "Show"
+                          : "Tampilkan"
+                    }
+                    style={{
+                      ...btnStyle,
+                      color: exp.is_visible
+                        ? "var(--color-accent-bright)"
+                        : "var(--color-text-muted)",
+                      borderColor: exp.is_visible
+                        ? "var(--color-accent)"
+                        : "var(--color-border)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color =
+                        "var(--color-accent-bright)";
+                      e.currentTarget.style.borderColor = "var(--color-accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = exp.is_visible
+                        ? "var(--color-accent-bright)"
+                        : "var(--color-text-muted)";
+                      e.currentTarget.style.borderColor = exp.is_visible
+                        ? "var(--color-accent)"
+                        : "var(--color-border)";
+                    }}
+                  >
+                    {exp.is_visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                  </button>
+                  {/* Expand */}
                   <button
                     type="button"
                     onClick={() =>
                       setExpandedId((id) => (id === exp.id ? null : exp.id))
                     }
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
+                    style={btnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color =
                         "var(--color-accent-bright)";
@@ -718,20 +830,11 @@ export default function ExperienceManagerPage() {
                       <ChevronDown size={13} />
                     )}
                   </button>
+                  {/* Edit */}
                   <button
                     type="button"
                     onClick={() => startEdit(exp)}
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
+                    style={btnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color =
                         "var(--color-accent-bright)";
@@ -744,6 +847,7 @@ export default function ExperienceManagerPage() {
                   >
                     <Pencil size={13} />
                   </button>
+                  {/* Delete */}
                   <button
                     type="button"
                     onClick={() => {
@@ -756,17 +860,7 @@ export default function ExperienceManagerPage() {
                       )
                         deleteExp.mutate(exp.id);
                     }}
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
+                    style={btnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.color = "#f87171";
                       e.currentTarget.style.borderColor =
@@ -781,6 +875,8 @@ export default function ExperienceManagerPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Expanded detail */}
               {expandedId === exp.id && (
                 <div
                   style={{
