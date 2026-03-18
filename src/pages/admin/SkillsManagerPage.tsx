@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminAPI } from "@/api/admin";
 import { toast } from "sonner";
@@ -22,6 +22,17 @@ const BLANK: SkillForm = {
   proficiency_level: "advanced",
   is_featured: false,
   category_id: "",
+};
+
+const parseLocalized = (val: unknown): { en: string; id: string } => {
+  if (!val) return { en: "", id: "" };
+  if (typeof val === "object" && val !== null)
+    return val as { en: string; id: string };
+  try {
+    return JSON.parse(val as string);
+  } catch {
+    return { en: String(val), id: String(val) };
+  }
 };
 
 function FieldLabel({ text }: { text: string }) {
@@ -100,51 +111,34 @@ export default function SkillsManagerPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<SkillForm>(BLANK);
   const [newCatName, setNewCatName] = useState("");
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // Track explicitly collapsed categories; default = all expanded
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const { data: catsRaw, isLoading } = useQuery({
     queryKey: ["admin-skill-categories"],
     queryFn: () => adminAPI.getSkillCategories() as Promise<SkillCategory[]>,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
-  const parseLocalized = (val: unknown): { en: string; id: string } => {
-    if (!val) return { en: "", id: "" };
-    if (typeof val === "object") return val as { en: string; id: string };
-    try {
-      return JSON.parse(val as string);
-    } catch {
-      return { en: val as string, id: val as string };
-    }
-  };
+  const categories: SkillCategory[] = useMemo(
+    () =>
+      (catsRaw ?? []).map((cat) => ({
+        ...cat,
+        name: parseLocalized(cat.name),
+        skills: (cat.skills ?? []).map((s) => ({
+          ...s,
+          name: parseLocalized(s.name),
+        })),
+      })),
+    [catsRaw],
+  );
 
-  const categories: SkillCategory[] = (catsRaw ?? []).map((cat) => ({
-    ...cat,
-    name: parseLocalized(cat.name),
-    skills: (cat.skills ?? []).map((s) => ({
-      ...s,
-      name: parseLocalized(s.name),
-    })),
-  }));
+  const isOpen = (id: string) => !collapsed[id]; // default open
+  const toggleOpen = (id: string) =>
+    setCollapsed((p) => ({ ...p, [id]: !p[id] }));
 
-  // Auto-expand all categories on first load
-  useEffect(() => {
-    if (categories.length > 0) {
-      setExpanded((prev) => {
-        const next = { ...prev };
-        categories.forEach((c) => {
-          if (!(c.id in next)) next[c.id] = true;
-        });
-        return next;
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catsRaw]);
-
-  const invalidate = () => {
+  const invalidate = () =>
     qc.invalidateQueries({ queryKey: ["admin-skill-categories"] });
-    qc.invalidateQueries({ queryKey: ["skills"] });
-  };
 
   const createSkill = useMutation({
     mutationFn: (data: object) => adminAPI.createSkill(data),
@@ -171,7 +165,27 @@ export default function SkillsManagerPage() {
   const toggleFeatured = useMutation({
     mutationFn: ({ id, val }: { id: string; val: boolean }) =>
       adminAPI.updateSkill(id, { is_featured: val }),
-    onSuccess: () => invalidate(),
+    // Optimistic update — flip star immediately
+    onMutate: async ({ id, val }) => {
+      await qc.cancelQueries({ queryKey: ["admin-skill-categories"] });
+      const prev = qc.getQueryData(["admin-skill-categories"]);
+      qc.setQueryData(
+        ["admin-skill-categories"],
+        (old: SkillCategory[] | undefined) =>
+          old?.map((cat) => ({
+            ...cat,
+            skills: cat.skills.map((s) =>
+              s.id === id ? { ...s, is_featured: val } : s,
+            ),
+          })),
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(["admin-skill-categories"], ctx.prev);
+      toast.error(lang === "en" ? "Update failed" : "Gagal memperbarui");
+    },
+    onSettled: () => invalidate(),
   });
 
   const createCategory = useMutation({
@@ -207,6 +221,27 @@ export default function SkillsManagerPage() {
     });
   };
 
+  const handleAddCategory = () => {
+    const trimmed = newCatName.trim();
+    if (!trimmed) return;
+    if (
+      categories.some((c) => c.name.en.toLowerCase() === trimmed.toLowerCase())
+    ) {
+      toast.error(
+        lang === "en" ? "Category already exists" : "Kategori sudah ada",
+      );
+      return;
+    }
+    createCategory.mutate(trimmed);
+  };
+
+  const card = {
+    background: "var(--color-surface-card)",
+    border: "1px solid var(--color-border)",
+    borderRadius: 16,
+    backdropFilter: "blur(16px)",
+  };
+
   if (isLoading)
     return (
       <div className="admin-page">
@@ -219,15 +254,6 @@ export default function SkillsManagerPage() {
         ))}
       </div>
     );
-
-  const allCats = categories;
-
-  const cardStyle = {
-    background: "var(--color-surface-card)",
-    border: "1px solid var(--color-border)",
-    borderRadius: 16,
-    backdropFilter: "blur(16px)",
-  };
 
   return (
     <div className="admin-page">
@@ -256,7 +282,7 @@ export default function SkillsManagerPage() {
 
       {/* Add Skill Form */}
       {showForm && (
-        <div style={{ ...cardStyle, padding: "clamp(20px, 3vw, 28px)" }}>
+        <div style={{ ...card, padding: "clamp(20px, 3vw, 28px)" }}>
           <div
             style={{
               display: "flex",
@@ -294,7 +320,6 @@ export default function SkillsManagerPage() {
               <X size={16} />
             </button>
           </div>
-
           <form onSubmit={handleSubmit}>
             <div
               style={{
@@ -347,7 +372,7 @@ export default function SkillsManagerPage() {
                   <option value="">
                     {lang === "en" ? "Select category..." : "Pilih kategori..."}
                   </option>
-                  {allCats.map((c) => (
+                  {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name.en}
                     </option>
@@ -355,7 +380,7 @@ export default function SkillsManagerPage() {
                 </select>
               </div>
               <div>
-                <FieldLabel text={lang === "en" ? "Level" : "Level"} />
+                <FieldLabel text="Level" />
                 <select
                   className="input-cyber"
                   value={form.proficiency_level}
@@ -375,7 +400,6 @@ export default function SkillsManagerPage() {
                 </select>
               </div>
             </div>
-
             <div style={{ marginBottom: 20 }}>
               <Toggle
                 checked={form.is_featured}
@@ -385,7 +409,6 @@ export default function SkillsManagerPage() {
                 }
               />
             </div>
-
             <div
               style={{
                 display: "flex",
@@ -424,10 +447,10 @@ export default function SkillsManagerPage() {
 
       {/* Categories + Skills */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {allCats.length === 0 ? (
+        {categories.length === 0 ? (
           <div
             style={{
-              ...cardStyle,
+              ...card,
               padding: "48px 24px",
               textAlign: "center",
               color: "var(--color-text-muted)",
@@ -439,262 +462,259 @@ export default function SkillsManagerPage() {
               : "Belum ada kategori. Tambahkan di bawah."}
           </div>
         ) : (
-          allCats.map((cat) => (
-            <div key={cat.id} style={cardStyle}>
-              {/* Category header */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "14px 18px",
-                  cursor: "pointer",
-                  background: expanded[cat.id]
-                    ? "rgba(59,130,246,0.04)"
-                    : "transparent",
-                  transition: "background 0.15s",
-                }}
-                onClick={() =>
-                  setExpanded((p) => ({ ...p, [cat.id]: !p[cat.id] }))
-                }
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  {expanded[cat.id] ? (
-                    <ChevronUp
-                      size={15}
-                      style={{ color: "var(--color-text-muted)" }}
-                    />
-                  ) : (
-                    <ChevronDown
-                      size={15}
-                      style={{ color: "var(--color-text-muted)" }}
-                    />
-                  )}
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--color-text-primary)",
-                    }}
-                  >
-                    {cat.name.en}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: "2px 8px",
-                      borderRadius: 999,
-                      background: "rgba(59,130,246,0.1)",
-                      border: "1px solid rgba(59,130,246,0.2)",
-                      color: "var(--color-accent-bright)",
-                    }}
-                  >
-                    {cat.skills.length}
-                  </span>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (
-                      confirm(
-                        lang === "en"
-                          ? "Delete this category and all its skills?"
-                          : "Hapus kategori ini beserta semua skillnya?",
-                      )
-                    )
-                      deleteCategory.mutate(cat.id);
-                  }}
+          categories.map((cat) => {
+            const open = isOpen(cat.id);
+            return (
+              <div key={cat.id} style={card}>
+                {/* Category header */}
+                <div
                   style={{
-                    padding: 7,
-                    borderRadius: 7,
-                    border: "1px solid var(--color-border)",
-                    background: "transparent",
-                    cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
-                    color: "var(--color-text-muted)",
-                    transition: "all 0.15s",
+                    justifyContent: "space-between",
+                    padding: "14px 18px",
+                    cursor: "pointer",
+                    background: open ? "rgba(59,130,246,0.04)" : "transparent",
+                    transition: "background 0.15s",
+                    borderRadius: open ? "16px 16px 0 0" : 16,
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#f87171";
-                    e.currentTarget.style.borderColor = "rgba(248,113,113,0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--color-text-muted)";
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                  }}
+                  onClick={() => toggleOpen(cat.id)}
                 >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-
-              {/* Skills list */}
-              {expanded[cat.id] && (
-                <div style={{ borderTop: "1px solid var(--color-border)" }}>
-                  {cat.skills.length === 0 ? (
-                    <p
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
+                    {open ? (
+                      <ChevronUp
+                        size={15}
+                        style={{ color: "var(--color-text-muted)" }}
+                      />
+                    ) : (
+                      <ChevronDown
+                        size={15}
+                        style={{ color: "var(--color-text-muted)" }}
+                      />
+                    )}
+                    <span
                       style={{
-                        fontSize: 12,
-                        color: "var(--color-text-muted)",
-                        padding: "16px 18px",
-                        fontStyle: "italic",
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--color-text-primary)",
                       }}
                     >
-                      {lang === "en"
-                        ? "No skills in this category"
-                        : "Belum ada skill di kategori ini"}
-                    </p>
-                  ) : (
-                    cat.skills.map((skill: Skill, idx: number) => (
-                      <div
-                        key={skill.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "11px 18px",
-                          borderBottom:
-                            idx < cat.skills.length - 1
-                              ? "1px solid var(--color-border)"
-                              : "none",
-                          transition: "background 0.15s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background =
-                            "rgba(59,130,246,0.03)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.background = "transparent")
-                        }
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFeatured.mutate({
-                                id: skill.id,
-                                val: !skill.is_featured,
-                              });
-                            }}
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: 2,
-                              color: skill.is_featured
-                                ? "#facc15"
-                                : "var(--color-text-muted)",
-                              display: "flex",
-                              alignItems: "center",
-                              transition: "color 0.15s",
-                            }}
-                            title={
-                              lang === "en"
-                                ? "Toggle featured"
-                                : "Toggle unggulan"
-                            }
-                          >
-                            <Star
-                              size={13}
-                              fill={skill.is_featured ? "currentColor" : "none"}
-                            />
-                          </button>
-                          <span
-                            style={{
-                              fontSize: 13,
-                              color: "var(--color-text-primary)",
-                            }}
-                          >
-                            {skill.name.en}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 600,
-                              padding: "2px 8px",
-                              borderRadius: 999,
-                              background: "rgba(59,130,246,0.08)",
-                              border: "1px solid rgba(59,130,246,0.15)",
-                              color: "var(--color-accent-bright)",
-                              textTransform: "capitalize",
-                            }}
-                          >
-                            {skill.proficiency_level}
-                          </span>
-                          <button
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  lang === "en"
-                                    ? "Delete this skill?"
-                                    : "Hapus skill ini?",
-                                )
-                              )
-                                deleteSkill.mutate(skill.id);
-                            }}
-                            style={{
-                              padding: 6,
-                              borderRadius: 6,
-                              border: "1px solid var(--color-border)",
-                              background: "transparent",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              color: "var(--color-text-muted)",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = "#f87171";
-                              e.currentTarget.style.borderColor =
-                                "rgba(248,113,113,0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color =
-                                "var(--color-text-muted)";
-                              e.currentTarget.style.borderColor =
-                                "var(--color-border)";
-                            }}
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                      {cat.name.en}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: 999,
+                        background: "rgba(59,130,246,0.1)",
+                        border: "1px solid rgba(59,130,246,0.2)",
+                        color: "var(--color-accent-bright)",
+                      }}
+                    >
+                      {cat.skills.length}
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (
+                        confirm(
+                          lang === "en"
+                            ? "Delete this category and all its skills?"
+                            : "Hapus kategori ini beserta semua skillnya?",
+                        )
+                      )
+                        deleteCategory.mutate(cat.id);
+                    }}
+                    style={{
+                      padding: 7,
+                      borderRadius: 7,
+                      border: "1px solid var(--color-border)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      color: "var(--color-text-muted)",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#f87171";
+                      e.currentTarget.style.borderColor =
+                        "rgba(248,113,113,0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--color-text-muted)";
+                      e.currentTarget.style.borderColor = "var(--color-border)";
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
-              )}
-            </div>
-          ))
+
+                {/* Skills list */}
+                {open && (
+                  <div style={{ borderTop: "1px solid var(--color-border)" }}>
+                    {cat.skills.length === 0 ? (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "var(--color-text-muted)",
+                          padding: "16px 18px",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {lang === "en"
+                          ? "No skills in this category"
+                          : "Belum ada skill di kategori ini"}
+                      </p>
+                    ) : (
+                      cat.skills.map((skill: Skill, idx: number) => (
+                        <div
+                          key={skill.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "11px 18px",
+                            borderBottom:
+                              idx < cat.skills.length - 1
+                                ? "1px solid var(--color-border)"
+                                : "none",
+                            transition: "background 0.15s",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(59,130,246,0.03)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background = "transparent")
+                          }
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                            }}
+                          >
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFeatured.mutate({
+                                  id: skill.id,
+                                  val: !skill.is_featured,
+                                });
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: 2,
+                                color: skill.is_featured
+                                  ? "#facc15"
+                                  : "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                transition: "color 0.15s",
+                              }}
+                              title={
+                                lang === "en"
+                                  ? "Toggle featured"
+                                  : "Toggle unggulan"
+                              }
+                            >
+                              <Star
+                                size={13}
+                                fill={
+                                  skill.is_featured ? "currentColor" : "none"
+                                }
+                              />
+                            </button>
+                            <span
+                              style={{
+                                fontSize: 13,
+                                color: "var(--color-text-primary)",
+                              }}
+                            >
+                              {skill.name.en}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 600,
+                                padding: "2px 8px",
+                                borderRadius: 999,
+                                background: "rgba(59,130,246,0.08)",
+                                border: "1px solid rgba(59,130,246,0.15)",
+                                color: "var(--color-accent-bright)",
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {skill.proficiency_level}
+                            </span>
+                            <button
+                              onClick={() => {
+                                if (
+                                  confirm(
+                                    lang === "en"
+                                      ? "Delete this skill?"
+                                      : "Hapus skill ini?",
+                                  )
+                                )
+                                  deleteSkill.mutate(skill.id);
+                              }}
+                              style={{
+                                padding: 6,
+                                borderRadius: 6,
+                                border: "1px solid var(--color-border)",
+                                background: "transparent",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                color: "var(--color-text-muted)",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = "#f87171";
+                                e.currentTarget.style.borderColor =
+                                  "rgba(248,113,113,0.4)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color =
+                                  "var(--color-text-muted)";
+                                e.currentTarget.style.borderColor =
+                                  "var(--color-border)";
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
       {/* Add Category */}
-      <div
-        style={{
-          background: "var(--color-surface-card)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 16,
-          backdropFilter: "blur(16px)",
-          padding: "clamp(16px, 2vw, 20px)",
-        }}
-      >
+      <div style={{ ...card, padding: "clamp(16px, 2vw, 20px)" }}>
         <FieldLabel text={lang === "en" ? "New Category" : "Kategori Baru"} />
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <input
             className="input-cyber"
             style={{ flex: 1, minWidth: 200 }}
@@ -706,42 +726,15 @@ export default function SkillsManagerPage() {
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && newCatName.trim()) {
+              if (e.key === "Enter") {
                 e.preventDefault();
-                const trimmed = newCatName.trim();
-                const exists = categories.some(
-                  (c) => c.name.en.toLowerCase() === trimmed.toLowerCase(),
-                );
-                if (exists) {
-                  toast.error(
-                    lang === "en"
-                      ? "Category already exists"
-                      : "Kategori sudah ada",
-                  );
-                  return;
-                }
-                createCategory.mutate(trimmed);
+                handleAddCategory();
               }
             }}
           />
           <button
             type="button"
-            onClick={() => {
-              const trimmed = newCatName.trim();
-              if (!trimmed) return;
-              const exists = categories.some(
-                (c) => c.name.en.toLowerCase() === trimmed.toLowerCase(),
-              );
-              if (exists) {
-                toast.error(
-                  lang === "en"
-                    ? "Category already exists"
-                    : "Kategori sudah ada",
-                );
-                return;
-              }
-              createCategory.mutate(trimmed);
-            }}
+            onClick={handleAddCategory}
             disabled={createCategory.isPending || !newCatName.trim()}
             className="btn-secondary"
             style={{ gap: 6, flexShrink: 0 }}
