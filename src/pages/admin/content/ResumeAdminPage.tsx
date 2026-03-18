@@ -9,8 +9,10 @@ const CVBuilder = lazy(() => import("@/features/cv/CVBuilder"));
 
 export default function ResumeAdminPage() {
   const { lang: uiLang } = useLanguageStore();
-  const [tab, setTab] = useState<"url" | "builder">("url");
   const [contentLang, setContentLang] = useState<"en" | "id">("en");
+  // null = user hasn't manually switched tabs yet
+  const [tab, setTab] = useState<"url" | "builder" | null>(null);
+
   const { values, isLoading, mutation, handleChange, handleLocChange, save } =
     useAdminForm(
       ["admin", "resume"],
@@ -26,6 +28,9 @@ export default function ResumeAdminPage() {
     );
 
   const activeSource = (values.cv_source as string) || "url";
+  // Fall back to saved cv_source until user manually clicks a tab
+  const resolvedTab: "url" | "builder" =
+    tab ?? (activeSource as "url" | "builder");
   const showButton = bool(values, "enable_cv_download");
 
   const tabBtnStyle = (active: boolean) => ({
@@ -81,7 +86,7 @@ export default function ResumeAdminPage() {
         </div>
       </div>
 
-      {/* Status summary */}
+      {/* Status bar */}
       <div
         style={{
           display: "flex",
@@ -103,13 +108,14 @@ export default function ResumeAdminPage() {
         <CheckCircle2 size={14} />
         {showButton
           ? uiLang === "en"
-            ? `Download button is visible — source: ${activeSource === "url" ? "External URL" : "CV Builder"}`
+            ? `Download button visible — source: ${activeSource === "url" ? "External URL" : "CV Builder"}`
             : `Tombol unduh terlihat — sumber: ${activeSource === "url" ? "URL Eksternal" : "CV Builder"}`
           : uiLang === "en"
             ? "Download button is hidden from the public site"
             : "Tombol unduh disembunyikan dari situs publik"}
       </div>
 
+      {/* Tabs */}
       <div
         style={{
           display: "flex",
@@ -120,7 +126,7 @@ export default function ResumeAdminPage() {
         <button
           type="button"
           onClick={() => setTab("url")}
-          style={tabBtnStyle(tab === "url")}
+          style={tabBtnStyle(resolvedTab === "url")}
         >
           <Link2 size={14} />
           {uiLang === "en" ? "Use URL" : "Gunakan URL"}
@@ -129,7 +135,7 @@ export default function ResumeAdminPage() {
         <button
           type="button"
           onClick={() => setTab("builder")}
-          style={tabBtnStyle(tab === "builder")}
+          style={tabBtnStyle(resolvedTab === "builder")}
         >
           <FileText size={14} />
           {uiLang === "en" ? "CV Builder" : "Buat CV"}
@@ -137,7 +143,8 @@ export default function ResumeAdminPage() {
         </button>
       </div>
 
-      {tab === "url" && (
+      {/* URL tab */}
+      {resolvedTab === "url" && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -206,9 +213,9 @@ export default function ResumeAdminPage() {
         </form>
       )}
 
-      {tab === "builder" && (
+      {/* Builder tab */}
+      {resolvedTab === "builder" && (
         <>
-          {/* Activate builder source */}
           <div
             style={{
               display: "flex",
