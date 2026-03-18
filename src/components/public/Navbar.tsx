@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon, Download } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { useThemeStore } from "@/store/themeStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useQuery } from "@tanstack/react-query";
@@ -67,11 +67,6 @@ export default function Navbar() {
     queryKey: ["sections"],
     queryFn: publicAPI.getSections,
     staleTime: 5 * 60 * 1000,
-  });
-  const { data: resume } = useQuery({
-    queryKey: ["resume"],
-    queryFn: publicAPI.getResume,
-    staleTime: 10 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -271,29 +266,6 @@ export default function Navbar() {
                 </button>
               )}
 
-              {/* CV button */}
-              {resume?.enable_cv_download && resume?.cv_url && (
-                <a
-                  href={
-                    lang === "id" && resume.cv_url_id
-                      ? resume.cv_url_id
-                      : resume.cv_url
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary navbar-cv-btn"
-                  style={{
-                    fontSize: 12,
-                    padding: "7px 14px",
-                    gap: 6,
-                    marginLeft: 4,
-                  }}
-                >
-                  <Download size={13} />
-                  {getText(resume.button_label, lang) || "CV"}
-                </a>
-              )}
-
               {/* Mobile hamburger */}
               <button
                 onClick={() => setOpen(!open)}
@@ -450,23 +422,6 @@ export default function Navbar() {
               gap: 12,
             }}
           >
-            {resume?.enable_cv_download && resume?.cv_url && (
-              <a
-                href={
-                  lang === "id" && resume.cv_url_id
-                    ? resume.cv_url_id
-                    : resume.cv_url
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-                onClick={() => setOpen(false)}
-                style={{ justifyContent: "center" }}
-              >
-                <Download size={15} />{" "}
-                {getText(resume.button_label, lang) || "Download CV"}
-              </a>
-            )}
             <div style={{ display: "flex", gap: 10 }}>
               {enableLangSwitcher && (
                 <button
