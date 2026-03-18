@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { adminAPI } from "@/api/admin";
 import { useLanguageStore } from "@/store/languageStore";
 import { pdf, PDFViewer } from "@react-pdf/renderer";
-import { CVDocument } from "@/pages/admin/CVDocument";
-import type { CVTemplate, CVPageSize } from "@/pages/admin/CVDocument";
+import { CVDocument } from "@/features/cv";
+import type { CVTemplate, CVPageSize } from "@/features/cv";
 import {
   Plus,
   Trash2,
@@ -16,39 +16,12 @@ import {
   X,
 } from "lucide-react";
 import type { Experience, SkillCategory } from "@/types";
-
-export interface CVData {
-  name: string;
-  title: string;
-  email: string;
-  phone: string;
-  location: string;
-  website: string;
-  photo_url: string;
-  summary: string;
-  experiences: CVExperience[];
-  skills: CVSkillGroup[];
-  education: CVEducation[];
-}
-export interface CVExperience {
-  id: string;
-  role: string;
-  company: string;
-  period: string;
-  description: string;
-}
-export interface CVSkillGroup {
-  id: string;
-  category: string;
-  items: string;
-}
-export interface CVEducation {
-  id: string;
-  degree: string;
-  school: string;
-  period: string;
-  description: string;
-}
+import type {
+  CVData,
+  CVExperience,
+  CVSkillGroup,
+  CVEducation,
+} from "@/features/cv";
 
 const BLANK_CV: CVData = {
   name: "",
@@ -217,6 +190,21 @@ const TEMPLATES: {
   { id: "modern", label: "Modern", accent: "#0ea5e9", bg: "#1e293b" },
   { id: "bold", label: "Bold", accent: "#7c3aed", bg: "#7c3aed" },
   { id: "elegant", label: "Elegant", accent: "#a16207", bg: "#fffdf9" },
+  { id: "tech", label: "Tech", accent: "#3fb950", bg: "#0d1117" },
+  { id: "executive", label: "Executive", accent: "#1e3a5f", bg: "#1e3a5f" },
+  { id: "creative", label: "Creative", accent: "#ec4899", bg: "#ec4899" },
+  { id: "compact", label: "Compact", accent: "#374151", bg: "#f9fafb" },
+  { id: "timeline", label: "Timeline", accent: "#6366f1", bg: "#1e1b4b" },
+  { id: "academic", label: "Academic", accent: "#111827", bg: "#ffffff" },
+  { id: "nordic", label: "Nordic", accent: "#e2e8f0", bg: "#1a1a2e" },
+  { id: "dark", label: "Dark", accent: "#a78bfa", bg: "#09090b" },
+  { id: "split", label: "Split", accent: "#0f4c75", bg: "#0f4c75" },
+  { id: "corporate", label: "Corporate", accent: "#111827", bg: "#f9fafb" },
+  { id: "infographic", label: "Infographic", accent: "#f97316", bg: "#f97316" },
+  { id: "pastel", label: "Pastel", accent: "#9333ea", bg: "#fdf4ff" },
+  { id: "mono", label: "Mono", accent: "#111827", bg: "#ffffff" },
+  { id: "midnight", label: "Midnight", accent: "#38bdf8", bg: "#020617" },
+  { id: "gradient", label: "Gradient", accent: "#4f46e5", bg: "#4f46e5" },
 ];
 
 function TemplateSelector({
@@ -1052,7 +1040,7 @@ export default function CVBuilder() {
                   }
                 />
                 <Textarea
-                  value={edu.description}
+                  value={edu.description ?? ""}
                   onChange={(v) => setEdu(edu.id, "description", v)}
                   rows={2}
                 />
