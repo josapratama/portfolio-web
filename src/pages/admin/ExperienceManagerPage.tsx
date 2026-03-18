@@ -72,20 +72,21 @@ function toPayload(f: ExpForm) {
 }
 
 function fromExperience(exp: Experience): ExpForm {
+  const ach = Array.isArray(exp.achievements) ? exp.achievements : [];
   return {
-    org_en: exp.organization.en,
-    org_id: exp.organization.id,
-    role_en: exp.role.en,
-    role_id: exp.role.id,
+    org_en: exp.organization?.en || "",
+    org_id: exp.organization?.id || "",
+    role_en: exp.role?.en || "",
+    role_id: exp.role?.id || "",
     loc_en: exp.location?.en || "",
     loc_id: exp.location?.id || "",
-    employment_type: exp.employment_type,
+    employment_type: exp.employment_type || "Full-time",
     start_date: exp.start_date?.slice(0, 10) || "",
     end_date: exp.end_date?.slice(0, 10) || "",
-    is_current: exp.is_current,
+    is_current: exp.is_current ?? false,
     desc_en: exp.description?.en || "",
     desc_id: exp.description?.id || "",
-    achievements: (exp.achievements as string[]).join("\n"),
+    achievements: ach.join("\n"),
   };
 }
 
@@ -683,65 +684,99 @@ export default function ExperienceManagerPage() {
                     flexShrink: 0,
                   }}
                 >
-                  {[
-                    {
-                      icon:
-                        expandedId === exp.id ? (
-                          <ChevronUp size={13} />
-                        ) : (
-                          <ChevronDown size={13} />
-                        ),
-                      onClick: () =>
-                        setExpandedId((id) => (id === exp.id ? null : exp.id)),
-                      hover: "accent",
-                    },
-                    {
-                      icon: <Pencil size={13} />,
-                      onClick: () => startEdit(exp),
-                      hover: "accent",
-                    },
-                    {
-                      icon: <Trash2 size={13} />,
-                      onClick: () => {
-                        if (confirm(uiLang === "en" ? "Delete?" : "Hapus?"))
-                          deleteExp.mutate(exp.id);
-                      },
-                      hover: "red",
-                    },
-                  ].map((btn, i) => (
-                    <button
-                      key={i}
-                      onClick={btn.onClick}
-                      style={{
-                        padding: 7,
-                        borderRadius: 7,
-                        border: "1px solid var(--color-border)",
-                        background: "transparent",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        color: "var(--color-text-muted)",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color =
-                          btn.hover === "red"
-                            ? "#f87171"
-                            : "var(--color-accent-bright)";
-                        e.currentTarget.style.borderColor =
-                          btn.hover === "red"
-                            ? "rgba(248,113,113,0.4)"
-                            : "var(--color-accent)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = "var(--color-text-muted)";
-                        e.currentTarget.style.borderColor =
-                          "var(--color-border)";
-                      }}
-                    >
-                      {btn.icon}
-                    </button>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedId((id) => (id === exp.id ? null : exp.id))
+                    }
+                    style={{
+                      padding: 7,
+                      borderRadius: 7,
+                      border: "1px solid var(--color-border)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      color: "var(--color-text-muted)",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color =
+                        "var(--color-accent-bright)";
+                      e.currentTarget.style.borderColor = "var(--color-accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--color-text-muted)";
+                      e.currentTarget.style.borderColor = "var(--color-border)";
+                    }}
+                  >
+                    {expandedId === exp.id ? (
+                      <ChevronUp size={13} />
+                    ) : (
+                      <ChevronDown size={13} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(exp)}
+                    style={{
+                      padding: 7,
+                      borderRadius: 7,
+                      border: "1px solid var(--color-border)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      color: "var(--color-text-muted)",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color =
+                        "var(--color-accent-bright)";
+                      e.currentTarget.style.borderColor = "var(--color-accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--color-text-muted)";
+                      e.currentTarget.style.borderColor = "var(--color-border)";
+                    }}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        confirm(
+                          uiLang === "en"
+                            ? "Delete this experience?"
+                            : "Hapus pengalaman ini?",
+                        )
+                      )
+                        deleteExp.mutate(exp.id);
+                    }}
+                    style={{
+                      padding: 7,
+                      borderRadius: 7,
+                      border: "1px solid var(--color-border)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      color: "var(--color-text-muted)",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#f87171";
+                      e.currentTarget.style.borderColor =
+                        "rgba(248,113,113,0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--color-text-muted)";
+                      e.currentTarget.style.borderColor = "var(--color-border)";
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               </div>
               {expandedId === exp.id && (
@@ -764,39 +799,58 @@ export default function ExperienceManagerPage() {
                       {exp.description.en}
                     </p>
                   )}
-                  {(exp.achievements as string[]).length > 0 && (
-                    <ul
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                      }}
-                    >
-                      {(exp.achievements as string[]).map((a, i) => (
-                        <li
-                          key={i}
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: 8,
-                            fontSize: 12,
-                            color: "var(--color-text-secondary)",
-                          }}
-                        >
-                          <span
+                  {Array.isArray(exp.achievements) &&
+                    exp.achievements.length > 0 && (
+                      <ul
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6,
+                          listStyle: "none",
+                          padding: 0,
+                          margin: 0,
+                        }}
+                      >
+                        {exp.achievements.map((a, i) => (
+                          <li
+                            key={i}
                             style={{
-                              color: "var(--color-accent)",
-                              marginTop: 1,
-                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: 8,
+                              fontSize: 12,
+                              color: "var(--color-text-secondary)",
                             }}
                           >
-                            ▹
-                          </span>
-                          {a}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                            <span
+                              style={{
+                                color: "var(--color-accent)",
+                                marginTop: 1,
+                                flexShrink: 0,
+                              }}
+                            >
+                              ▹
+                            </span>
+                            {a}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  {!exp.description?.en &&
+                    (!Array.isArray(exp.achievements) ||
+                      exp.achievements.length === 0) && (
+                      <p
+                        style={{
+                          fontSize: 12,
+                          color: "var(--color-text-muted)",
+                          fontStyle: "italic",
+                        }}
+                      >
+                        {uiLang === "en"
+                          ? "No details added yet."
+                          : "Belum ada detail."}
+                      </p>
+                    )}
                 </div>
               )}
             </div>
