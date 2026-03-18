@@ -193,7 +193,122 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* Status / Availability */}
+          <div>
+            <p
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--color-text-muted)",
+                marginBottom: 16,
+              }}
+            >
+              {lang === "en" ? "Status" : "Status"}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Availability badge */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: settings?.site?.is_available
+                      ? "#4ade80"
+                      : "#f87171",
+                    boxShadow: settings?.site?.is_available
+                      ? "0 0 6px rgba(74,222,128,0.6)"
+                      : "0 0 6px rgba(248,113,113,0.6)",
+                    flexShrink: 0,
+                    display: "inline-block",
+                  }}
+                />
+                <span
+                  style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
+                >
+                  {settings?.site?.availability_status ||
+                    (lang === "en"
+                      ? "Available for work"
+                      : "Tersedia untuk kerja")}
+                </span>
+              </div>
+
+              {/* Email */}
+              {settings?.site?.contact_email && (
+                <a
+                  href={`mailto:${settings.site.contact_email}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 13,
+                    color: "var(--color-text-secondary)",
+                    textDecoration: "none",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    ((e.currentTarget as HTMLAnchorElement).style.color =
+                      "var(--color-accent-bright)")
+                  }
+                  onMouseLeave={(e) =>
+                    ((e.currentTarget as HTMLAnchorElement).style.color =
+                      "var(--color-text-secondary)")
+                  }
+                >
+                  <Mail
+                    size={13}
+                    style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                  />
+                  {settings.site.contact_email}
+                </a>
+              )}
+
+              {/* Location */}
+              {settings?.site?.location && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Globe
+                    size={13}
+                    style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 13,
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
+                    {settings.site.location}
+                  </span>
+                </div>
+              )}
+
+              {/* CTA */}
+              <Link
+                to="/contact"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 4,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--color-accent-bright)",
+                  textDecoration: "none",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.opacity =
+                    "0.75")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.opacity = "1")
+                }
+              >
+                {lang === "en" ? "Get in touch →" : "Hubungi saya →"}
+              </Link>
+            </div>
+          </div>
           <div>
             <p
               style={{
