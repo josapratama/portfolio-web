@@ -247,61 +247,65 @@ export default function ExperiencePage() {
                         color: "var(--color-text-secondary)",
                         lineHeight: 1.7,
                         marginBottom:
-                          (exp.achievements as string[]).length > 0 ? 16 : 0,
+                          Array.isArray(exp.achievements) &&
+                          exp.achievements.length > 0
+                            ? 16
+                            : 0,
                       }}
                     >
                       {getText(exp.description, lang)}
                     </p>
 
-                    {(exp.achievements as string[]).length > 0 && (
-                      <div>
-                        <p
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 700,
-                            letterSpacing: "0.1em",
-                            textTransform: "uppercase",
-                            color: "var(--color-text-muted)",
-                            marginBottom: 10,
-                          }}
-                        >
-                          {lang === "en"
-                            ? "Key Achievements"
-                            : "Pencapaian Utama"}
-                        </p>
-                        <ul
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 6,
-                          }}
-                        >
-                          {(exp.achievements as string[]).map((a, j) => (
-                            <li
-                              key={j}
-                              style={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                gap: 8,
-                                fontSize: "clamp(0.75rem, 1.5vw, 0.875rem)",
-                                color: "var(--color-text-secondary)",
-                              }}
-                            >
-                              <span
+                    {Array.isArray(exp.achievements) &&
+                      exp.achievements.length > 0 && (
+                        <div>
+                          <p
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              letterSpacing: "0.1em",
+                              textTransform: "uppercase",
+                              color: "var(--color-text-muted)",
+                              marginBottom: 10,
+                            }}
+                          >
+                            {lang === "en"
+                              ? "Key Achievements"
+                              : "Pencapaian Utama"}
+                          </p>
+                          <ul
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6,
+                            }}
+                          >
+                            {exp.achievements.map((a, j) => (
+                              <li
+                                key={j}
                                 style={{
-                                  color: "var(--color-accent)",
-                                  marginTop: 2,
-                                  flexShrink: 0,
+                                  display: "flex",
+                                  alignItems: "flex-start",
+                                  gap: 8,
+                                  fontSize: "clamp(0.75rem, 1.5vw, 0.875rem)",
+                                  color: "var(--color-text-secondary)",
                                 }}
                               >
-                                ▹
-                              </span>
-                              {a}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                                <span
+                                  style={{
+                                    color: "var(--color-accent)",
+                                    marginTop: 2,
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  ▹
+                                </span>
+                                {a}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 </div>
               ))}

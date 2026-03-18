@@ -63,6 +63,8 @@ function toPayload(f: ExpForm) {
     start_date: f.start_date,
     end_date: f.is_current ? null : f.end_date || null,
     is_current: f.is_current,
+    is_visible: true,
+    sort_order: 0,
     description: { en: f.desc_en, id: f.desc_id || f.desc_en },
     achievements: f.achievements
       .split("\n")
