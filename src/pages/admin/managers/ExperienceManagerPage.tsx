@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
 import type { Experience } from "@/types";
+import { FieldLabel, Toggle, LangPill, IconBtn, EmptyState } from "./_shared";
+import { cardStyle, cardStyleNoOverflow, btnStyle } from "./_styles";
 
 const EMP_TYPES = [
   "Full-time",
@@ -97,139 +99,273 @@ function fromExperience(exp: Experience): ExpForm {
   };
 }
 
-function FieldLabel({ text }: { text: string }) {
-  return (
-    <label
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "var(--color-text-muted)",
-        display: "block",
-        marginBottom: 8,
-      }}
-    >
-      {text}
-    </label>
-  );
-}
-
-function LangPill({
-  lang,
-  setLang,
+// ── Sub-component ──────────────────────────────────────────────────────────────
+function ExperienceForm({
+  form,
+  setForm,
+  editId,
+  isPending,
+  onSubmit,
+  onCancel,
+  uiLang,
 }: {
-  lang: "en" | "id";
-  setLang: (l: "en" | "id") => void;
+  form: ExpForm;
+  setForm: React.Dispatch<React.SetStateAction<ExpForm>>;
+  editId: string | null;
+  isPending: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+  uiLang: string;
 }) {
+  const [contentLang, setContentLang] = useState<"en" | "id">("en");
+  const set = (key: keyof ExpForm, val: string | boolean) =>
+    setForm((p) => ({ ...p, [key]: val }));
+
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 2,
-        background: "var(--color-surface-2)",
-        border: "1px solid var(--color-border)",
-        borderRadius: 6,
-        padding: 2,
-      }}
-    >
-      {(["en", "id"] as const).map((l) => (
-        <button
-          key={l}
-          type="button"
-          onClick={() => setLang(l)}
+    <div style={{ ...cardStyleNoOverflow, padding: "clamp(20px, 3vw, 28px)" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}
+      >
+        <h2
           style={{
-            padding: "3px 10px",
-            borderRadius: 4,
-            border: "none",
-            cursor: "pointer",
-            fontSize: 10,
+            fontSize: 15,
             fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            background: lang === l ? "var(--color-accent)" : "transparent",
-            color: lang === l ? "white" : "var(--color-text-muted)",
-            transition: "all 0.15s",
+            color: "var(--color-text-primary)",
           }}
         >
-          {l}
-        </button>
-      ))}
+          {editId
+            ? uiLang === "en"
+              ? "Edit Experience"
+              : "Edit Pengalaman"
+            : uiLang === "en"
+              ? "New Experience"
+              : "Pengalaman Baru"}
+        </h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <LangPill lang={contentLang} setLang={setContentLang} />
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: 6,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+              display: "flex",
+              alignItems: "center",
+              borderRadius: 6,
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+      <form onSubmit={onSubmit}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+            marginBottom: 16,
+          }}
+        >
+          <div>
+            <FieldLabel
+              text={`${uiLang === "en" ? "Organization" : "Organisasi"} (${contentLang.toUpperCase()}) *`}
+            />
+            <input
+              className="input-cyber"
+              value={contentLang === "en" ? form.org_en : form.org_id}
+              onChange={(e) =>
+                set(contentLang === "en" ? "org_en" : "org_id", e.target.value)
+              }
+              placeholder={
+                uiLang === "en" ? "Company / Organization" : "Perusahaan"
+              }
+              required={contentLang === "en"}
+            />
+          </div>
+          <div>
+            <FieldLabel
+              text={`${uiLang === "en" ? "Role" : "Jabatan"} (${contentLang.toUpperCase()}) *`}
+            />
+            <input
+              className="input-cyber"
+              value={contentLang === "en" ? form.role_en : form.role_id}
+              onChange={(e) =>
+                set(
+                  contentLang === "en" ? "role_en" : "role_id",
+                  e.target.value,
+                )
+              }
+              placeholder="Senior Engineer"
+              required={contentLang === "en"}
+            />
+          </div>
+          <div>
+            <FieldLabel
+              text={`${uiLang === "en" ? "Location" : "Lokasi"} (${contentLang.toUpperCase()})`}
+            />
+            <input
+              className="input-cyber"
+              value={contentLang === "en" ? form.loc_en : form.loc_id}
+              onChange={(e) =>
+                set(contentLang === "en" ? "loc_en" : "loc_id", e.target.value)
+              }
+              placeholder="Jakarta, Indonesia"
+            />
+          </div>
+          <div>
+            <FieldLabel
+              text={uiLang === "en" ? "Employment Type" : "Tipe Pekerjaan"}
+            />
+            <select
+              className="input-cyber"
+              value={form.employment_type}
+              onChange={(e) => set("employment_type", e.target.value)}
+              style={{ cursor: "pointer" }}
+            >
+              {EMP_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel
+              text={`${uiLang === "en" ? "Start Date" : "Tanggal Mulai"} *`}
+            />
+            <input
+              className="input-cyber"
+              type="date"
+              value={form.start_date}
+              onChange={(e) => set("start_date", e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <FieldLabel
+              text={uiLang === "en" ? "End Date" : "Tanggal Selesai"}
+            />
+            <input
+              className="input-cyber"
+              type="date"
+              value={form.end_date}
+              onChange={(e) => set("end_date", e.target.value)}
+              disabled={form.is_current}
+              style={{ opacity: form.is_current ? 0.5 : 1 }}
+            />
+          </div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 20,
+            marginBottom: 16,
+          }}
+        >
+          <Toggle
+            checked={form.is_current}
+            onChange={(v) => set("is_current", v)}
+            label={
+              uiLang === "en"
+                ? "Currently working here"
+                : "Masih bekerja di sini"
+            }
+          />
+          <Toggle
+            checked={form.is_visible}
+            onChange={(v) => set("is_visible", v)}
+            label={
+              uiLang === "en"
+                ? "Visible on public site"
+                : "Tampil di situs publik"
+            }
+          />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Description" : "Deskripsi"} (${contentLang.toUpperCase()})`}
+          />
+          <textarea
+            className="input-cyber"
+            rows={3}
+            style={{ resize: "vertical" }}
+            value={contentLang === "en" ? form.desc_en : form.desc_id}
+            onChange={(e) =>
+              set(contentLang === "en" ? "desc_en" : "desc_id", e.target.value)
+            }
+            placeholder={
+              uiLang === "en"
+                ? "Describe your role..."
+                : "Deskripsikan peran Anda..."
+            }
+          />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <FieldLabel
+            text={
+              uiLang === "en"
+                ? "Achievements (one per line)"
+                : "Pencapaian (satu per baris)"
+            }
+          />
+          <textarea
+            className="input-cyber"
+            rows={4}
+            style={{
+              resize: "vertical",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+            }}
+            value={form.achievements}
+            onChange={(e) => set("achievements", e.target.value)}
+            placeholder={
+              uiLang === "en"
+                ? "Reduced API latency by 60%\nMentored 3 junior engineers"
+                : "Mengurangi latensi API 60%\nMembimbing 3 junior engineer"
+            }
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            paddingTop: 16,
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          <button type="submit" disabled={isPending} className="btn-primary">
+            {isPending
+              ? uiLang === "en"
+                ? "Saving..."
+                : "Menyimpan..."
+              : editId
+                ? uiLang === "en"
+                  ? "Update"
+                  : "Perbarui"
+                : uiLang === "en"
+                  ? "Add Experience"
+                  : "Tambah Pengalaman"}
+          </button>
+          <button type="button" onClick={onCancel} className="btn-secondary">
+            {uiLang === "en" ? "Cancel" : "Batal"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
 
-function Toggle({
-  value,
-  onChange,
-  label,
-}: {
-  value: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
-  return (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: "pointer",
-      }}
-    >
-      <div
-        onClick={() => onChange(!value)}
-        style={{
-          position: "relative",
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          background: value ? "var(--color-accent)" : "var(--color-border)",
-          transition: "background 0.2s",
-          flexShrink: 0,
-          cursor: "pointer",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 2,
-            left: value ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "white",
-            transition: "left 0.2s",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-          }}
-        />
-      </div>
-      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
-        {label}
-      </span>
-    </label>
-  );
-}
-
-const cardStyle = {
-  background: "var(--color-surface-card)",
-  border: "1px solid var(--color-border)",
-  borderRadius: 16,
-  backdropFilter: "blur(16px)",
-  overflow: "hidden" as const,
-};
-const btnStyle = {
-  padding: 7,
-  borderRadius: 7,
-  border: "1px solid var(--color-border)",
-  background: "transparent",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  color: "var(--color-text-muted)",
-  transition: "all 0.15s",
-};
-
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function ExperienceManagerPage() {
   const qc = useQueryClient();
   const { lang: uiLang } = useLanguageStore();
@@ -237,7 +373,6 @@ export default function ExperienceManagerPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ExpForm>(BLANK);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [contentLang, setContentLang] = useState<"en" | "id">("en");
 
   const { data: experiences, isLoading } = useQuery<Experience[]>({
     queryKey: ["admin-experiences"],
@@ -262,7 +397,6 @@ export default function ExperienceManagerPage() {
     onError: () =>
       toast.error(uiLang === "en" ? "Failed to add" : "Gagal menambahkan"),
   });
-
   const updateExp = useMutation({
     mutationFn: ({ id, data }: { id: string; data: object }) =>
       adminAPI.updateExperience(id, data),
@@ -275,7 +409,6 @@ export default function ExperienceManagerPage() {
     onError: () =>
       toast.error(uiLang === "en" ? "Failed to update" : "Gagal memperbarui"),
   });
-
   const deleteExp = useMutation({
     mutationFn: (id: string) => adminAPI.deleteExperience(id),
     onSuccess: () => {
@@ -284,7 +417,6 @@ export default function ExperienceManagerPage() {
     },
   });
 
-  // Quick visibility toggle without opening the form
   const toggleVisible = (exp: Experience) => {
     adminAPI
       .updateExperience(exp.id, {
@@ -314,8 +446,6 @@ export default function ExperienceManagerPage() {
     setEditId(null);
     setForm(BLANK);
   };
-  const set = (key: keyof ExpForm, val: string | boolean) =>
-    setForm((p) => ({ ...p, [key]: val }));
 
   if (isLoading)
     return (
@@ -358,307 +488,26 @@ export default function ExperienceManagerPage() {
         )}
       </div>
 
-      {/* ── Form ── */}
       {showForm && (
-        <div style={{ ...cardStyle, padding: "clamp(20px, 3vw, 28px)" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 20,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: "var(--color-text-primary)",
-              }}
-            >
-              {editId
-                ? uiLang === "en"
-                  ? "Edit Experience"
-                  : "Edit Pengalaman"
-                : uiLang === "en"
-                  ? "New Experience"
-                  : "Pengalaman Baru"}
-            </h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <LangPill lang={contentLang} setLang={setContentLang} />
-              <button
-                type="button"
-                onClick={cancelForm}
-                style={{
-                  padding: 6,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: 6,
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: 16,
-                marginBottom: 16,
-              }}
-            >
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Organization" : "Organisasi"} (${contentLang.toUpperCase()}) *`}
-                />
-                <input
-                  className="input-cyber"
-                  value={contentLang === "en" ? form.org_en : form.org_id}
-                  onChange={(e) =>
-                    set(
-                      contentLang === "en" ? "org_en" : "org_id",
-                      e.target.value,
-                    )
-                  }
-                  placeholder={
-                    uiLang === "en" ? "Company / Organization" : "Perusahaan"
-                  }
-                  required={contentLang === "en"}
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Role" : "Jabatan"} (${contentLang.toUpperCase()}) *`}
-                />
-                <input
-                  className="input-cyber"
-                  value={contentLang === "en" ? form.role_en : form.role_id}
-                  onChange={(e) =>
-                    set(
-                      contentLang === "en" ? "role_en" : "role_id",
-                      e.target.value,
-                    )
-                  }
-                  placeholder="Senior Engineer"
-                  required={contentLang === "en"}
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Location" : "Lokasi"} (${contentLang.toUpperCase()})`}
-                />
-                <input
-                  className="input-cyber"
-                  value={contentLang === "en" ? form.loc_en : form.loc_id}
-                  onChange={(e) =>
-                    set(
-                      contentLang === "en" ? "loc_en" : "loc_id",
-                      e.target.value,
-                    )
-                  }
-                  placeholder="Jakarta, Indonesia"
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={uiLang === "en" ? "Employment Type" : "Tipe Pekerjaan"}
-                />
-                <select
-                  className="input-cyber"
-                  value={form.employment_type}
-                  onChange={(e) => set("employment_type", e.target.value)}
-                  style={{ cursor: "pointer" }}
-                >
-                  {EMP_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Start Date" : "Tanggal Mulai"} *`}
-                />
-                <input
-                  className="input-cyber"
-                  type="date"
-                  value={form.start_date}
-                  onChange={(e) => set("start_date", e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={uiLang === "en" ? "End Date" : "Tanggal Selesai"}
-                />
-                <input
-                  className="input-cyber"
-                  type="date"
-                  value={form.end_date}
-                  onChange={(e) => set("end_date", e.target.value)}
-                  disabled={form.is_current}
-                  style={{ opacity: form.is_current ? 0.5 : 1 }}
-                />
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 20,
-                marginBottom: 16,
-              }}
-            >
-              <Toggle
-                value={form.is_current}
-                onChange={(v) => set("is_current", v)}
-                label={
-                  uiLang === "en"
-                    ? "Currently working here"
-                    : "Masih bekerja di sini"
-                }
-              />
-              <Toggle
-                value={form.is_visible}
-                onChange={(v) => set("is_visible", v)}
-                label={
-                  uiLang === "en"
-                    ? "Visible on public site"
-                    : "Tampil di situs publik"
-                }
-              />
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <FieldLabel
-                text={`${uiLang === "en" ? "Description" : "Deskripsi"} (${contentLang.toUpperCase()})`}
-              />
-              <textarea
-                className="input-cyber"
-                rows={3}
-                style={{ resize: "vertical" }}
-                value={contentLang === "en" ? form.desc_en : form.desc_id}
-                onChange={(e) =>
-                  set(
-                    contentLang === "en" ? "desc_en" : "desc_id",
-                    e.target.value,
-                  )
-                }
-                placeholder={
-                  uiLang === "en"
-                    ? "Describe your role..."
-                    : "Deskripsikan peran Anda..."
-                }
-              />
-            </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <FieldLabel
-                text={
-                  uiLang === "en"
-                    ? "Achievements (one per line)"
-                    : "Pencapaian (satu per baris)"
-                }
-              />
-              <textarea
-                className="input-cyber"
-                rows={4}
-                style={{
-                  resize: "vertical",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 12,
-                }}
-                value={form.achievements}
-                onChange={(e) => set("achievements", e.target.value)}
-                placeholder={
-                  uiLang === "en"
-                    ? "Reduced API latency by 60%\nMentored 3 junior engineers"
-                    : "Mengurangi latensi API 60%\nMembimbing 3 junior engineer"
-                }
-              />
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                paddingTop: 16,
-                borderTop: "1px solid var(--color-border)",
-              }}
-            >
-              <button
-                type="submit"
-                disabled={createExp.isPending || updateExp.isPending}
-                className="btn-primary"
-              >
-                {createExp.isPending || updateExp.isPending
-                  ? uiLang === "en"
-                    ? "Saving..."
-                    : "Menyimpan..."
-                  : editId
-                    ? uiLang === "en"
-                      ? "Update"
-                      : "Perbarui"
-                    : uiLang === "en"
-                      ? "Add Experience"
-                      : "Tambah Pengalaman"}
-              </button>
-              <button
-                type="button"
-                onClick={cancelForm}
-                className="btn-secondary"
-              >
-                {uiLang === "en" ? "Cancel" : "Batal"}
-              </button>
-            </div>
-          </form>
-        </div>
+        <ExperienceForm
+          form={form}
+          setForm={setForm}
+          editId={editId}
+          isPending={createExp.isPending || updateExp.isPending}
+          onSubmit={handleSubmit}
+          onCancel={cancelForm}
+          uiLang={uiLang}
+        />
       )}
 
-      {/* ── List ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {(experiences || []).length === 0 ? (
-          <div
-            style={{
-              ...cardStyle,
-              padding: "48px 24px",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              <Briefcase size={20} />
-            </div>
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
-              {uiLang === "en"
-                ? "No experiences yet."
-                : "Belum ada pengalaman."}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Briefcase size={20} />}
+            message={
+              uiLang === "en" ? "No experiences yet." : "Belum ada pengalaman."
+            }
+          />
         ) : (
           (experiences || []).map((exp) => (
             <div
@@ -673,7 +522,6 @@ export default function ExperienceManagerPage() {
                   padding: "16px 18px",
                 }}
               >
-                {/* Icon */}
                 <div
                   style={{
                     width: 40,
@@ -690,8 +538,6 @@ export default function ExperienceManagerPage() {
                 >
                   <Briefcase size={16} />
                 </div>
-
-                {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
@@ -759,8 +605,6 @@ export default function ExperienceManagerPage() {
                     {exp.location?.en ? ` · ${exp.location.en}` : ""}
                   </p>
                 </div>
-
-                {/* Action buttons */}
                 <div
                   style={{
                     display: "flex",
@@ -769,7 +613,6 @@ export default function ExperienceManagerPage() {
                     flexShrink: 0,
                   }}
                 >
-                  {/* Visibility toggle */}
                   <button
                     type="button"
                     onClick={() => toggleVisible(exp)}
@@ -807,49 +650,22 @@ export default function ExperienceManagerPage() {
                   >
                     {exp.is_visible ? <Eye size={13} /> : <EyeOff size={13} />}
                   </button>
-                  {/* Expand */}
-                  <button
-                    type="button"
+                  <IconBtn
                     onClick={() =>
                       setExpandedId((id) => (id === exp.id ? null : exp.id))
                     }
-                    style={btnStyle}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color =
-                        "var(--color-accent-bright)";
-                      e.currentTarget.style.borderColor = "var(--color-accent)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
                   >
                     {expandedId === exp.id ? (
                       <ChevronUp size={13} />
                     ) : (
                       <ChevronDown size={13} />
                     )}
-                  </button>
-                  {/* Edit */}
-                  <button
-                    type="button"
-                    onClick={() => startEdit(exp)}
-                    style={btnStyle}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color =
-                        "var(--color-accent-bright)";
-                      e.currentTarget.style.borderColor = "var(--color-accent)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
-                  >
+                  </IconBtn>
+                  <IconBtn onClick={() => startEdit(exp)}>
                     <Pencil size={13} />
-                  </button>
-                  {/* Delete */}
-                  <button
-                    type="button"
+                  </IconBtn>
+                  <IconBtn
+                    variant="danger"
                     onClick={() => {
                       if (
                         confirm(
@@ -860,23 +676,11 @@ export default function ExperienceManagerPage() {
                       )
                         deleteExp.mutate(exp.id);
                     }}
-                    style={btnStyle}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#f87171";
-                      e.currentTarget.style.borderColor =
-                        "rgba(248,113,113,0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
                   >
                     <Trash2 size={13} />
-                  </button>
+                  </IconBtn>
                 </div>
               </div>
-
-              {/* Expanded detail */}
               {expandedId === exp.id && (
                 <div
                   style={{

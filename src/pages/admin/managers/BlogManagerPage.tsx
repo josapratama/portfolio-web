@@ -2,8 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminAPI } from "@/api/admin";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, BookOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
+import {
+  FieldLabel,
+  Toggle,
+  LangPill,
+  IconBtn,
+  EmptyState,
+  ModalShell,
+} from "./_shared";
+import { cardStyle } from "./_styles";
 
 interface BlogPost {
   id: string;
@@ -49,120 +58,256 @@ const BLANK: BlogPostForm = {
   og_image_url: "",
 };
 
-function FieldLabel({ text }: { text: string }) {
-  return (
-    <label
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "var(--color-text-muted)",
-        display: "block",
-        marginBottom: 8,
-      }}
-    >
-      {text}
-    </label>
-  );
-}
-
-function LangPill({
-  lang,
-  setLang,
+// ── Sub-component ──────────────────────────────────────────────────────────────
+function BlogPostModal({
+  editing,
+  form,
+  setForm,
+  isPending,
+  onSave,
+  onClose,
+  uiLang,
 }: {
-  lang: "en" | "id";
-  setLang: (l: "en" | "id") => void;
+  editing: string;
+  form: BlogPostForm;
+  setForm: React.Dispatch<React.SetStateAction<BlogPostForm>>;
+  isPending: boolean;
+  onSave: () => void;
+  onClose: () => void;
+  uiLang: string;
 }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: 2,
-        background: "var(--color-surface-2)",
-        border: "1px solid var(--color-border)",
-        borderRadius: 6,
-        padding: 2,
-      }}
-    >
-      {(["en", "id"] as const).map((l) => (
-        <button
-          key={l}
-          type="button"
-          onClick={() => setLang(l)}
-          style={{
-            padding: "3px 10px",
-            borderRadius: 4,
-            border: "none",
-            cursor: "pointer",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            background: lang === l ? "var(--color-accent)" : "transparent",
-            color: lang === l ? "white" : "var(--color-text-muted)",
-            transition: "all 0.15s",
-          }}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
-  );
-}
+  const [tagInput, setTagInput] = useState("");
+  const [contentLang, setContentLang] = useState<"en" | "id">("en");
 
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
+  const addTag = () => {
+    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
+      setForm((p) => ({ ...p, tags: [...p.tags, tagInput.trim()] }));
+      setTagInput("");
+    }
+  };
+  const removeTag = (tag: string) =>
+    setForm((p) => ({ ...p, tags: p.tags.filter((t) => t !== tag) }));
+
   return (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: "pointer",
-      }}
+    <ModalShell
+      title={
+        editing === "new"
+          ? uiLang === "en"
+            ? "New Post"
+            : "Post Baru"
+          : uiLang === "en"
+            ? "Edit Post"
+            : "Edit Post"
+      }
+      onClose={onClose}
+      headerRight={<LangPill lang={contentLang} setLang={setContentLang} />}
+      maxWidth={720}
     >
-      <div
-        onClick={() => onChange(!checked)}
-        style={{
-          position: "relative",
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          background: checked ? "var(--color-accent)" : "var(--color-border)",
-          transition: "background 0.2s",
-          flexShrink: 0,
-          cursor: "pointer",
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div
           style={{
-            position: "absolute",
-            top: 2,
-            left: checked ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "white",
-            transition: "left 0.2s",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
           }}
-        />
+        >
+          <div>
+            <FieldLabel text="Slug" />
+            <input
+              className="input-cyber"
+              value={form.slug}
+              onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+              placeholder="my-post-slug"
+            />
+          </div>
+          <div>
+            <FieldLabel text={uiLang === "en" ? "Status" : "Status"} />
+            <select
+              className="input-cyber"
+              value={form.status}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, status: e.target.value }))
+              }
+              style={{ cursor: "pointer" }}
+            >
+              <option value="draft">Draft</option>
+              <option value="published">
+                {uiLang === "en" ? "Published" : "Dipublikasi"}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Title" : "Judul"} (${contentLang.toUpperCase()})`}
+          />
+          <input
+            className="input-cyber"
+            value={form.title[contentLang]}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                title: { ...p.title, [contentLang]: e.target.value },
+              }))
+            }
+          />
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Excerpt" : "Ringkasan"} (${contentLang.toUpperCase()})`}
+          />
+          <textarea
+            className="input-cyber"
+            rows={2}
+            style={{ resize: "vertical" }}
+            value={form.excerpt[contentLang]}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                excerpt: { ...p.excerpt, [contentLang]: e.target.value },
+              }))
+            }
+          />
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Content (Markdown)" : "Konten (Markdown)"} (${contentLang.toUpperCase()})`}
+          />
+          <textarea
+            className="input-cyber"
+            rows={12}
+            style={{
+              resize: "vertical",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+            }}
+            value={form.content[contentLang]}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                content: { ...p.content, [contentLang]: e.target.value },
+              }))
+            }
+          />
+        </div>
+        <div>
+          <FieldLabel
+            text={uiLang === "en" ? "Cover Image URL" : "URL Gambar Cover"}
+          />
+          <input
+            className="input-cyber"
+            value={form.cover_image_url}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, cover_image_url: e.target.value }))
+            }
+            placeholder="https://..."
+          />
+        </div>
+        <div>
+          <FieldLabel text="Tags" />
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input
+              className="input-cyber"
+              style={{ flex: 1 }}
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && (e.preventDefault(), addTag())
+              }
+              placeholder={
+                uiLang === "en"
+                  ? "Add tag and press Enter"
+                  : "Tambah tag dan tekan Enter"
+              }
+            />
+            <button
+              type="button"
+              onClick={addTag}
+              className="btn-secondary"
+              style={{ padding: "10px 16px", fontSize: 13 }}
+            >
+              {uiLang === "en" ? "Add" : "Tambah"}
+            </button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {form.tags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                  background: "rgba(59,130,246,0.1)",
+                  border: "1px solid rgba(59,130,246,0.25)",
+                  fontSize: 12,
+                  color: "var(--color-accent-bright)",
+                }}
+              >
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "inherit",
+                    padding: 0,
+                    lineHeight: 1,
+                    fontSize: 14,
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+          <Toggle
+            checked={form.is_featured}
+            onChange={(v) => setForm((p) => ({ ...p, is_featured: v }))}
+            label={uiLang === "en" ? "Featured post" : "Post unggulan"}
+          />
+          <Toggle
+            checked={form.is_visible}
+            onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
+            label={uiLang === "en" ? "Visible on site" : "Tampil di situs"}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            paddingTop: 16,
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          <button
+            onClick={onSave}
+            disabled={isPending}
+            className="btn-primary"
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            {isPending
+              ? uiLang === "en"
+                ? "Saving..."
+                : "Menyimpan..."
+              : uiLang === "en"
+                ? "Save Post"
+                : "Simpan Post"}
+          </button>
+          <button onClick={onClose} className="btn-secondary">
+            {uiLang === "en" ? "Cancel" : "Batal"}
+          </button>
+        </div>
       </div>
-      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
-        {label}
-      </span>
-    </label>
+    </ModalShell>
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function BlogManagerPage() {
   const qc = useQueryClient();
   const { lang: uiLang } = useLanguageStore();
@@ -172,8 +317,6 @@ export default function BlogManagerPage() {
   });
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState(BLANK);
-  const [tagInput, setTagInput] = useState("");
-  const [contentLang, setContentLang] = useState<"en" | "id">("en");
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin-blog"] });
@@ -223,14 +366,6 @@ export default function BlogManagerPage() {
     editing === "new"
       ? createM.mutate(form)
       : updateM.mutate({ id: editing!, data: form });
-  const addTag = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm((p) => ({ ...p, tags: [...p.tags, tagInput.trim()] }));
-      setTagInput("");
-    }
-  };
-  const removeTag = (tag: string) =>
-    setForm((p) => ({ ...p, tags: p.tags.filter((t) => t !== tag) }));
 
   if (isLoading)
     return (
@@ -238,14 +373,6 @@ export default function BlogManagerPage() {
         <div className="skeleton" style={{ height: 300, borderRadius: 12 }} />
       </div>
     );
-
-  const cardStyle = {
-    background: "var(--color-surface-card)",
-    border: "1px solid var(--color-border)",
-    borderRadius: 16,
-    backdropFilter: "blur(16px)",
-    overflow: "hidden" as const,
-  };
 
   return (
     <div className="admin-page">
@@ -266,292 +393,18 @@ export default function BlogManagerPage() {
         </button>
       </div>
 
-      {/* Modal */}
       {editing && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            zIndex: 50,
-            overflowY: "auto",
-            padding: "16px",
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              ...cardStyle,
-              width: "100%",
-              maxWidth: 720,
-              margin: "32px auto",
-              padding: "clamp(20px, 3vw, 32px)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 24,
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {editing === "new"
-                  ? uiLang === "en"
-                    ? "New Post"
-                    : "Post Baru"
-                  : uiLang === "en"
-                    ? "Edit Post"
-                    : "Edit Post"}
-              </h2>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <LangPill lang={contentLang} setLang={setContentLang} />
-                <button
-                  onClick={() => setEditing(null)}
-                  style={{
-                    padding: 6,
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    color: "var(--color-text-muted)",
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: 6,
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                <div>
-                  <FieldLabel text="Slug" />
-                  <input
-                    className="input-cyber"
-                    value={form.slug}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, slug: e.target.value }))
-                    }
-                    placeholder="my-post-slug"
-                  />
-                </div>
-                <div>
-                  <FieldLabel text={uiLang === "en" ? "Status" : "Status"} />
-                  <select
-                    className="input-cyber"
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, status: e.target.value }))
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">
-                      {uiLang === "en" ? "Published" : "Dipublikasi"}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Title" : "Judul"} (${contentLang.toUpperCase()})`}
-                />
-                <input
-                  className="input-cyber"
-                  value={form.title[contentLang]}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      title: { ...p.title, [contentLang]: e.target.value },
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Excerpt" : "Ringkasan"} (${contentLang.toUpperCase()})`}
-                />
-                <textarea
-                  className="input-cyber"
-                  rows={2}
-                  style={{ resize: "vertical" }}
-                  value={form.excerpt[contentLang]}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      excerpt: { ...p.excerpt, [contentLang]: e.target.value },
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Content (Markdown)" : "Konten (Markdown)"} (${contentLang.toUpperCase()})`}
-                />
-                <textarea
-                  className="input-cyber"
-                  rows={12}
-                  style={{
-                    resize: "vertical",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 12,
-                  }}
-                  value={form.content[contentLang]}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      content: { ...p.content, [contentLang]: e.target.value },
-                    }))
-                  }
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={
-                    uiLang === "en" ? "Cover Image URL" : "URL Gambar Cover"
-                  }
-                />
-                <input
-                  className="input-cyber"
-                  value={form.cover_image_url}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, cover_image_url: e.target.value }))
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-
-              {/* Tags */}
-              <div>
-                <FieldLabel text="Tags" />
-                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                  <input
-                    className="input-cyber"
-                    style={{ flex: 1 }}
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addTag())
-                    }
-                    placeholder={
-                      uiLang === "en"
-                        ? "Add tag and press Enter"
-                        : "Tambah tag dan tekan Enter"
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={addTag}
-                    className="btn-secondary"
-                    style={{ padding: "10px 16px", fontSize: 13 }}
-                  >
-                    {uiLang === "en" ? "Add" : "Tambah"}
-                  </button>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {form.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "3px 10px",
-                        borderRadius: 999,
-                        background: "rgba(59,130,246,0.1)",
-                        border: "1px solid rgba(59,130,246,0.25)",
-                        fontSize: 12,
-                        color: "var(--color-accent-bright)",
-                      }}
-                    >
-                      {tag}
-                      <button
-                        onClick={() => removeTag(tag)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "inherit",
-                          padding: 0,
-                          lineHeight: 1,
-                          fontSize: 14,
-                        }}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
-                <Toggle
-                  checked={form.is_featured}
-                  onChange={(v) => setForm((p) => ({ ...p, is_featured: v }))}
-                  label={uiLang === "en" ? "Featured post" : "Post unggulan"}
-                />
-                <Toggle
-                  checked={form.is_visible}
-                  onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
-                  label={
-                    uiLang === "en" ? "Visible on site" : "Tampil di situs"
-                  }
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  paddingTop: 16,
-                  borderTop: "1px solid var(--color-border)",
-                }}
-              >
-                <button
-                  onClick={handleSave}
-                  disabled={createM.isPending || updateM.isPending}
-                  className="btn-primary"
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  {createM.isPending || updateM.isPending
-                    ? uiLang === "en"
-                      ? "Saving..."
-                      : "Menyimpan..."
-                    : uiLang === "en"
-                      ? "Save Post"
-                      : "Simpan Post"}
-                </button>
-                <button
-                  onClick={() => setEditing(null)}
-                  className="btn-secondary"
-                >
-                  {uiLang === "en" ? "Cancel" : "Batal"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <BlogPostModal
+          editing={editing}
+          form={form}
+          setForm={setForm}
+          isPending={createM.isPending || updateM.isPending}
+          onSave={handleSave}
+          onClose={() => setEditing(null)}
+          uiLang={uiLang}
+        />
       )}
 
-      {/* Posts list */}
       <div style={cardStyle}>
         <div
           style={{
@@ -584,47 +437,25 @@ export default function BlogManagerPage() {
             </span>
           ))}
         </div>
-
         {(posts as BlogPost[]).length === 0 ? (
-          <div
-            style={{
-              padding: "48px 24px",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              <BookOpen size={20} />
-            </div>
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
-              {uiLang === "en"
+          <EmptyState
+            icon={<BookOpen size={20} />}
+            message={
+              uiLang === "en"
                 ? "No blog posts yet."
-                : "Belum ada postingan blog."}
-            </p>
-            <button
-              onClick={openCreate}
-              className="btn-secondary"
-              style={{ fontSize: 13, gap: 6 }}
-            >
-              <Plus size={14} />
-              {uiLang === "en" ? "Create first post" : "Buat post pertama"}
-            </button>
-          </div>
+                : "Belum ada postingan blog."
+            }
+            action={
+              <button
+                onClick={openCreate}
+                className="btn-secondary"
+                style={{ fontSize: 13, gap: 6 }}
+              >
+                <Plus size={14} />
+                {uiLang === "en" ? "Create first post" : "Buat post pertama"}
+              </button>
+            }
+          />
         ) : (
           (posts as BlogPost[]).map((post, idx) => (
             <div
@@ -723,31 +554,11 @@ export default function BlogManagerPage() {
                 {post.created_at?.slice(0, 10)}
               </span>
               <div style={{ display: "flex", gap: 4 }}>
-                <button
-                  onClick={() => openEdit(post.id)}
-                  style={{
-                    padding: 7,
-                    borderRadius: 7,
-                    border: "1px solid var(--color-border)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    color: "var(--color-text-muted)",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--color-accent-bright)";
-                    e.currentTarget.style.borderColor = "var(--color-accent)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--color-text-muted)";
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                  }}
-                >
+                <IconBtn onClick={() => openEdit(post.id)}>
                   <Pencil size={12} />
-                </button>
-                <button
+                </IconBtn>
+                <IconBtn
+                  variant="danger"
                   onClick={() => {
                     if (
                       confirm(
@@ -758,28 +569,9 @@ export default function BlogManagerPage() {
                     )
                       deleteM.mutate(post.id);
                   }}
-                  style={{
-                    padding: 7,
-                    borderRadius: 7,
-                    border: "1px solid var(--color-border)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    color: "var(--color-text-muted)",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#f87171";
-                    e.currentTarget.style.borderColor = "rgba(248,113,113,0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--color-text-muted)";
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                  }}
                 >
                   <Trash2 size={12} />
-                </button>
+                </IconBtn>
               </div>
             </div>
           ))

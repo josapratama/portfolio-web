@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Plus, Trash2, ChevronDown, ChevronUp, Star, X } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
 import type { SkillCategory, Skill } from "@/types";
+import { FieldLabel, Toggle, IconBtn } from "./_shared";
+import { cardStyle, cardStyleNoOverflow } from "./_styles";
 
 const LEVELS = ["beginner", "intermediate", "advanced", "expert"];
 
@@ -35,83 +37,347 @@ const parseLocalized = (val: unknown): { en: string; id: string } => {
   }
 };
 
-function FieldLabel({ text }: { text: string }) {
-  return (
-    <label
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "var(--color-text-muted)",
-        display: "block",
-        marginBottom: 8,
-      }}
-    >
-      {text}
-    </label>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  label,
+// ── Sub-components ─────────────────────────────────────────────────────────────
+function AddSkillForm({
+  form,
+  setForm,
+  categories,
+  isPending,
+  onSubmit,
+  onCancel,
+  lang,
 }: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
+  form: SkillForm;
+  setForm: React.Dispatch<React.SetStateAction<SkillForm>>;
+  categories: SkillCategory[];
+  isPending: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+  lang: string;
 }) {
   return (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: "pointer",
-      }}
-    >
+    <div style={{ ...cardStyleNoOverflow, padding: "clamp(20px, 3vw, 28px)" }}>
       <div
-        onClick={() => onChange(!checked)}
         style={{
-          position: "relative",
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          background: checked ? "var(--color-accent)" : "var(--color-border)",
-          transition: "background 0.2s",
-          flexShrink: 0,
-          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 20,
         }}
       >
+        <h2
+          style={{
+            fontSize: 15,
+            fontWeight: 700,
+            color: "var(--color-text-primary)",
+          }}
+        >
+          {lang === "en" ? "New Skill" : "Skill Baru"}
+        </h2>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            padding: 6,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "var(--color-text-muted)",
+            display: "flex",
+            alignItems: "center",
+            borderRadius: 6,
+          }}
+        >
+          <X size={16} />
+        </button>
+      </div>
+      <form onSubmit={onSubmit}>
         <div
           style={{
-            position: "absolute",
-            top: 2,
-            left: checked ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "white",
-            transition: "left 0.2s",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+            marginBottom: 16,
           }}
-        />
-      </div>
-      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
-        {label}
-      </span>
-    </label>
+        >
+          <div>
+            <FieldLabel text={`${lang === "en" ? "Name" : "Nama"} (EN) *`} />
+            <input
+              className="input-cyber"
+              value={form.name_en}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, name_en: e.target.value }))
+              }
+              placeholder="React"
+              required
+            />
+          </div>
+          <div>
+            <FieldLabel text={`${lang === "en" ? "Name" : "Nama"} (ID)`} />
+            <input
+              className="input-cyber"
+              value={form.name_id}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, name_id: e.target.value }))
+              }
+              placeholder={
+                lang === "en" ? "Same if identical" : "Sama jika identik"
+              }
+            />
+          </div>
+          <div>
+            <FieldLabel text={`${lang === "en" ? "Category" : "Kategori"} *`} />
+            <select
+              className="input-cyber"
+              value={form.category_id}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, category_id: e.target.value }))
+              }
+              required
+              style={{ cursor: "pointer" }}
+            >
+              <option value="">
+                {lang === "en" ? "Select category..." : "Pilih kategori..."}
+              </option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name.en}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel text="Level" />
+            <select
+              className="input-cyber"
+              value={form.proficiency_level}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, proficiency_level: e.target.value }))
+              }
+              style={{ cursor: "pointer" }}
+            >
+              {LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {l.charAt(0).toUpperCase() + l.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <Toggle
+            checked={form.is_featured}
+            onChange={(v) => setForm((p) => ({ ...p, is_featured: v }))}
+            label={lang === "en" ? "Featured on homepage" : "Tampil di beranda"}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            paddingTop: 16,
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          <button type="submit" disabled={isPending} className="btn-primary">
+            {isPending
+              ? lang === "en"
+                ? "Saving..."
+                : "Menyimpan..."
+              : lang === "en"
+                ? "Add Skill"
+                : "Tambah Skill"}
+          </button>
+          <button type="button" onClick={onCancel} className="btn-secondary">
+            {lang === "en" ? "Cancel" : "Batal"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
+function CategoryCard({
+  cat,
+  isOpen,
+  onToggle,
+  onDelete,
+  onDeleteSkill,
+  onToggleFeatured,
+  lang,
+}: {
+  cat: SkillCategory;
+  isOpen: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+  onDeleteSkill: (id: string) => void;
+  onToggleFeatured: (id: string, val: boolean) => void;
+  lang: string;
+}) {
+  return (
+    <div style={cardStyle}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 18px",
+          cursor: "pointer",
+          background: isOpen ? "rgba(59,130,246,0.04)" : "transparent",
+          transition: "background 0.15s",
+          borderRadius: isOpen ? "16px 16px 0 0" : 16,
+        }}
+        onClick={onToggle}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {isOpen ? (
+            <ChevronUp size={15} style={{ color: "var(--color-text-muted)" }} />
+          ) : (
+            <ChevronDown
+              size={15}
+              style={{ color: "var(--color-text-muted)" }}
+            />
+          )}
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+            }}
+          >
+            {cat.name.en}
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              padding: "2px 8px",
+              borderRadius: 999,
+              background: "rgba(59,130,246,0.1)",
+              border: "1px solid rgba(59,130,246,0.2)",
+              color: "var(--color-accent-bright)",
+            }}
+          >
+            {cat.skills.length}
+          </span>
+        </div>
+        <IconBtn
+          variant="danger"
+          onClick={(e?: React.MouseEvent) => {
+            e?.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 size={13} />
+        </IconBtn>
+      </div>
+      {isOpen && (
+        <div style={{ borderTop: "1px solid var(--color-border)" }}>
+          {cat.skills.length === 0 ? (
+            <p
+              style={{
+                fontSize: 12,
+                color: "var(--color-text-muted)",
+                padding: "16px 18px",
+                fontStyle: "italic",
+              }}
+            >
+              {lang === "en"
+                ? "No skills in this category"
+                : "Belum ada skill di kategori ini"}
+            </p>
+          ) : (
+            cat.skills.map((skill: Skill, idx: number) => (
+              <div
+                key={skill.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "11px 18px",
+                  borderBottom:
+                    idx < cat.skills.length - 1
+                      ? "1px solid var(--color-border)"
+                      : "none",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(59,130,246,0.03)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "transparent")
+                }
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    onClick={() =>
+                      onToggleFeatured(skill.id, !skill.is_featured)
+                    }
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 2,
+                      color: skill.is_featured
+                        ? "#facc15"
+                        : "var(--color-text-muted)",
+                      display: "flex",
+                      alignItems: "center",
+                      transition: "color 0.15s",
+                    }}
+                    title={
+                      lang === "en" ? "Toggle featured" : "Toggle unggulan"
+                    }
+                  >
+                    <Star
+                      size={13}
+                      fill={skill.is_featured ? "currentColor" : "none"}
+                    />
+                  </button>
+                  <span
+                    style={{ fontSize: 13, color: "var(--color-text-primary)" }}
+                  >
+                    {skill.name.en}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: 999,
+                      background: "rgba(59,130,246,0.08)",
+                      border: "1px solid rgba(59,130,246,0.15)",
+                      color: "var(--color-accent-bright)",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {skill.proficiency_level}
+                  </span>
+                  <IconBtn
+                    variant="danger"
+                    onClick={() => onDeleteSkill(skill.id)}
+                  >
+                    <Trash2 size={12} />
+                  </IconBtn>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function SkillsManagerPage() {
   const qc = useQueryClient();
   const { lang } = useLanguageStore();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<SkillForm>(BLANK);
   const [newCatName, setNewCatName] = useState("");
-  // Track explicitly collapsed categories; default = all expanded
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const { data: catsRaw, isLoading } = useQuery({
@@ -133,10 +399,9 @@ export default function SkillsManagerPage() {
     [catsRaw],
   );
 
-  const isOpen = (id: string) => !collapsed[id]; // default open
+  const isOpen = (id: string) => !collapsed[id];
   const toggleOpen = (id: string) =>
     setCollapsed((p) => ({ ...p, [id]: !p[id] }));
-
   const invalidate = () =>
     qc.invalidateQueries({ queryKey: ["admin-skill-categories"] });
 
@@ -153,7 +418,6 @@ export default function SkillsManagerPage() {
         lang === "en" ? "Failed to add skill" : "Gagal menambahkan skill",
       ),
   });
-
   const deleteSkill = useMutation({
     mutationFn: (id: string) => adminAPI.deleteSkill(id),
     onSuccess: () => {
@@ -161,11 +425,9 @@ export default function SkillsManagerPage() {
       toast.success(lang === "en" ? "Skill deleted" : "Skill dihapus");
     },
   });
-
   const toggleFeatured = useMutation({
     mutationFn: ({ id, val }: { id: string; val: boolean }) =>
       adminAPI.updateSkill(id, { is_featured: val }),
-    // Optimistic update — flip star immediately
     onMutate: async ({ id, val }) => {
       await qc.cancelQueries({ queryKey: ["admin-skill-categories"] });
       const prev = qc.getQueryData(["admin-skill-categories"]);
@@ -187,7 +449,6 @@ export default function SkillsManagerPage() {
     },
     onSettled: () => invalidate(),
   });
-
   const createCategory = useMutation({
     mutationFn: (name: string) =>
       adminAPI.createSkillCategory({ name: { en: name, id: name } }),
@@ -201,7 +462,6 @@ export default function SkillsManagerPage() {
         lang === "en" ? "Failed to create category" : "Gagal membuat kategori",
       ),
   });
-
   const deleteCategory = useMutation({
     mutationFn: (id: string) => adminAPI.deleteSkillCategory(id),
     onSuccess: () => {
@@ -220,7 +480,6 @@ export default function SkillsManagerPage() {
       category_id: form.category_id,
     });
   };
-
   const handleAddCategory = () => {
     const trimmed = newCatName.trim();
     if (!trimmed) return;
@@ -233,13 +492,6 @@ export default function SkillsManagerPage() {
       return;
     }
     createCategory.mutate(trimmed);
-  };
-
-  const card = {
-    background: "var(--color-surface-card)",
-    border: "1px solid var(--color-border)",
-    borderRadius: 16,
-    backdropFilter: "blur(16px)",
   };
 
   if (isLoading)
@@ -280,177 +532,26 @@ export default function SkillsManagerPage() {
         )}
       </div>
 
-      {/* Add Skill Form */}
       {showForm && (
-        <div style={{ ...card, padding: "clamp(20px, 3vw, 28px)" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 20,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: "var(--color-text-primary)",
-              }}
-            >
-              {lang === "en" ? "New Skill" : "Skill Baru"}
-            </h2>
-            <button
-              type="button"
-              onClick={() => {
-                setShowForm(false);
-                setForm(BLANK);
-              }}
-              style={{
-                padding: 6,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                color: "var(--color-text-muted)",
-                display: "flex",
-                alignItems: "center",
-                borderRadius: 6,
-              }}
-            >
-              <X size={16} />
-            </button>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: 16,
-                marginBottom: 16,
-              }}
-            >
-              <div>
-                <FieldLabel
-                  text={`${lang === "en" ? "Name" : "Nama"} (EN) *`}
-                />
-                <input
-                  className="input-cyber"
-                  value={form.name_en}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, name_en: e.target.value }))
-                  }
-                  placeholder="React"
-                  required
-                />
-              </div>
-              <div>
-                <FieldLabel text={`${lang === "en" ? "Name" : "Nama"} (ID)`} />
-                <input
-                  className="input-cyber"
-                  value={form.name_id}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, name_id: e.target.value }))
-                  }
-                  placeholder={
-                    lang === "en" ? "Same if identical" : "Sama jika identik"
-                  }
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${lang === "en" ? "Category" : "Kategori"} *`}
-                />
-                <select
-                  className="input-cyber"
-                  value={form.category_id}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, category_id: e.target.value }))
-                  }
-                  required
-                  style={{ cursor: "pointer" }}
-                >
-                  <option value="">
-                    {lang === "en" ? "Select category..." : "Pilih kategori..."}
-                  </option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name.en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <FieldLabel text="Level" />
-                <select
-                  className="input-cyber"
-                  value={form.proficiency_level}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      proficiency_level: e.target.value,
-                    }))
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  {LEVELS.map((l) => (
-                    <option key={l} value={l}>
-                      {l.charAt(0).toUpperCase() + l.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <Toggle
-                checked={form.is_featured}
-                onChange={(v) => setForm((p) => ({ ...p, is_featured: v }))}
-                label={
-                  lang === "en" ? "Featured on homepage" : "Tampil di beranda"
-                }
-              />
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                paddingTop: 16,
-                borderTop: "1px solid var(--color-border)",
-              }}
-            >
-              <button
-                type="submit"
-                disabled={createSkill.isPending}
-                className="btn-primary"
-              >
-                {createSkill.isPending
-                  ? lang === "en"
-                    ? "Saving..."
-                    : "Menyimpan..."
-                  : lang === "en"
-                    ? "Add Skill"
-                    : "Tambah Skill"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setForm(BLANK);
-                }}
-                className="btn-secondary"
-              >
-                {lang === "en" ? "Cancel" : "Batal"}
-              </button>
-            </div>
-          </form>
-        </div>
+        <AddSkillForm
+          form={form}
+          setForm={setForm}
+          categories={categories}
+          isPending={createSkill.isPending}
+          onSubmit={handleSubmit}
+          onCancel={() => {
+            setShowForm(false);
+            setForm(BLANK);
+          }}
+          lang={lang}
+        />
       )}
 
-      {/* Categories + Skills */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {categories.length === 0 ? (
           <div
             style={{
-              ...card,
+              ...cardStyleNoOverflow,
               padding: "48px 24px",
               textAlign: "center",
               color: "var(--color-text-muted)",
@@ -462,257 +563,40 @@ export default function SkillsManagerPage() {
               : "Belum ada kategori. Tambahkan di bawah."}
           </div>
         ) : (
-          categories.map((cat) => {
-            const open = isOpen(cat.id);
-            return (
-              <div key={cat.id} style={card}>
-                {/* Category header */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "14px 18px",
-                    cursor: "pointer",
-                    background: open ? "rgba(59,130,246,0.04)" : "transparent",
-                    transition: "background 0.15s",
-                    borderRadius: open ? "16px 16px 0 0" : 16,
-                  }}
-                  onClick={() => toggleOpen(cat.id)}
-                >
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    {open ? (
-                      <ChevronUp
-                        size={15}
-                        style={{ color: "var(--color-text-muted)" }}
-                      />
-                    ) : (
-                      <ChevronDown
-                        size={15}
-                        style={{ color: "var(--color-text-muted)" }}
-                      />
-                    )}
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "var(--color-text-primary)",
-                      }}
-                    >
-                      {cat.name.en}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        padding: "2px 8px",
-                        borderRadius: 999,
-                        background: "rgba(59,130,246,0.1)",
-                        border: "1px solid rgba(59,130,246,0.2)",
-                        color: "var(--color-accent-bright)",
-                      }}
-                    >
-                      {cat.skills.length}
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (
-                        confirm(
-                          lang === "en"
-                            ? "Delete this category and all its skills?"
-                            : "Hapus kategori ini beserta semua skillnya?",
-                        )
-                      )
-                        deleteCategory.mutate(cat.id);
-                    }}
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#f87171";
-                      e.currentTarget.style.borderColor =
-                        "rgba(248,113,113,0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-
-                {/* Skills list */}
-                {open && (
-                  <div style={{ borderTop: "1px solid var(--color-border)" }}>
-                    {cat.skills.length === 0 ? (
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: "var(--color-text-muted)",
-                          padding: "16px 18px",
-                          fontStyle: "italic",
-                        }}
-                      >
-                        {lang === "en"
-                          ? "No skills in this category"
-                          : "Belum ada skill di kategori ini"}
-                      </p>
-                    ) : (
-                      cat.skills.map((skill: Skill, idx: number) => (
-                        <div
-                          key={skill.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "11px 18px",
-                            borderBottom:
-                              idx < cat.skills.length - 1
-                                ? "1px solid var(--color-border)"
-                                : "none",
-                            transition: "background 0.15s",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.background =
-                              "rgba(59,130,246,0.03)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = "transparent")
-                          }
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 10,
-                            }}
-                          >
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFeatured.mutate({
-                                  id: skill.id,
-                                  val: !skill.is_featured,
-                                });
-                              }}
-                              style={{
-                                background: "transparent",
-                                border: "none",
-                                cursor: "pointer",
-                                padding: 2,
-                                color: skill.is_featured
-                                  ? "#facc15"
-                                  : "var(--color-text-muted)",
-                                display: "flex",
-                                alignItems: "center",
-                                transition: "color 0.15s",
-                              }}
-                              title={
-                                lang === "en"
-                                  ? "Toggle featured"
-                                  : "Toggle unggulan"
-                              }
-                            >
-                              <Star
-                                size={13}
-                                fill={
-                                  skill.is_featured ? "currentColor" : "none"
-                                }
-                              />
-                            </button>
-                            <span
-                              style={{
-                                fontSize: 13,
-                                color: "var(--color-text-primary)",
-                              }}
-                            >
-                              {skill.name.en}
-                            </span>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                padding: "2px 8px",
-                                borderRadius: 999,
-                                background: "rgba(59,130,246,0.08)",
-                                border: "1px solid rgba(59,130,246,0.15)",
-                                color: "var(--color-accent-bright)",
-                                textTransform: "capitalize",
-                              }}
-                            >
-                              {skill.proficiency_level}
-                            </span>
-                            <button
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    lang === "en"
-                                      ? "Delete this skill?"
-                                      : "Hapus skill ini?",
-                                  )
-                                )
-                                  deleteSkill.mutate(skill.id);
-                              }}
-                              style={{
-                                padding: 6,
-                                borderRadius: 6,
-                                border: "1px solid var(--color-border)",
-                                background: "transparent",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                color: "var(--color-text-muted)",
-                                transition: "all 0.15s",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.color = "#f87171";
-                                e.currentTarget.style.borderColor =
-                                  "rgba(248,113,113,0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.color =
-                                  "var(--color-text-muted)";
-                                e.currentTarget.style.borderColor =
-                                  "var(--color-border)";
-                              }}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
+          categories.map((cat) => (
+            <CategoryCard
+              key={cat.id}
+              cat={cat}
+              isOpen={isOpen(cat.id)}
+              onToggle={() => toggleOpen(cat.id)}
+              onDelete={() => {
+                if (
+                  confirm(
+                    lang === "en"
+                      ? "Delete this category and all its skills?"
+                      : "Hapus kategori ini beserta semua skillnya?",
+                  )
+                )
+                  deleteCategory.mutate(cat.id);
+              }}
+              onDeleteSkill={(id) => {
+                if (
+                  confirm(
+                    lang === "en" ? "Delete this skill?" : "Hapus skill ini?",
+                  )
+                )
+                  deleteSkill.mutate(id);
+              }}
+              onToggleFeatured={(id, val) => toggleFeatured.mutate({ id, val })}
+              lang={lang}
+            />
+          ))
         )}
       </div>
 
-      {/* Add Category */}
-      <div style={{ ...card, padding: "clamp(16px, 2vw, 20px)" }}>
+      <div
+        style={{ ...cardStyleNoOverflow, padding: "clamp(16px, 2vw, 20px)" }}
+      >
         <FieldLabel text={lang === "en" ? "New Category" : "Kategori Baru"} />
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <input

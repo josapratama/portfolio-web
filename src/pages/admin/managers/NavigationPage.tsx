@@ -8,10 +8,11 @@ import {
   Trash2,
   Link2,
   ExternalLink,
-  X,
   Navigation,
 } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
+import { FieldLabel, Toggle, IconBtn, EmptyState, ModalShell } from "./_shared";
+import { cardStyle } from "./_styles";
 
 interface NavItem {
   id: string;
@@ -30,76 +31,130 @@ const BLANK: Partial<NavItem> = {
   sort_order: 0,
 };
 
-function FieldLabel({ text }: { text: string }) {
-  return (
-    <label
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "var(--color-text-muted)",
-        display: "block",
-        marginBottom: 8,
-      }}
-    >
-      {text}
-    </label>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  label,
+// ── Sub-component ──────────────────────────────────────────────────────────────
+function NavItemModal({
+  editing,
+  form,
+  setForm,
+  isPending,
+  onSave,
+  onClose,
+  lang,
 }: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
+  editing: string;
+  form: Partial<NavItem>;
+  setForm: React.Dispatch<React.SetStateAction<Partial<NavItem>>>;
+  isPending: boolean;
+  onSave: () => void;
+  onClose: () => void;
+  lang: string;
 }) {
   return (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: "pointer",
-      }}
+    <ModalShell
+      title={
+        editing === "new"
+          ? lang === "en"
+            ? "Add Nav Item"
+            : "Tambah Item Nav"
+          : lang === "en"
+            ? "Edit Nav Item"
+            : "Edit Item Nav"
+      }
+      onClose={onClose}
     >
-      <div
-        onClick={() => onChange(!checked)}
-        style={{
-          position: "relative",
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          background: checked ? "var(--color-accent)" : "var(--color-border)",
-          transition: "background 0.2s",
-          flexShrink: 0,
-          cursor: "pointer",
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div>
+          <FieldLabel text={`${lang === "en" ? "Label" : "Label"} (EN)`} />
+          <input
+            className="input-cyber"
+            value={form.label?.en || ""}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                label: { en: e.target.value, id: p.label?.id ?? "" },
+              }))
+            }
+            placeholder={lang === "en" ? "e.g. About" : "mis. Tentang"}
+          />
+        </div>
+        <div>
+          <FieldLabel text={`${lang === "en" ? "Label" : "Label"} (ID)`} />
+          <input
+            className="input-cyber"
+            value={form.label?.id || ""}
+            onChange={(e) =>
+              setForm((p) => ({
+                ...p,
+                label: { en: p.label?.en ?? "", id: e.target.value },
+              }))
+            }
+            placeholder={lang === "en" ? "e.g. Tentang" : "mis. Tentang"}
+          />
+        </div>
+        <div>
+          <FieldLabel text="Href" />
+          <input
+            className="input-cyber"
+            value={form.href || ""}
+            onChange={(e) => setForm((p) => ({ ...p, href: e.target.value }))}
+            placeholder="/about"
+          />
+        </div>
+        <div>
+          <FieldLabel text={lang === "en" ? "Sort Order" : "Urutan"} />
+          <input
+            type="number"
+            className="input-cyber"
+            value={form.sort_order || 0}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, sort_order: parseInt(e.target.value) }))
+            }
+          />
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+          <Toggle
+            checked={!!form.is_external}
+            onChange={(v) => setForm((p) => ({ ...p, is_external: v }))}
+            label={lang === "en" ? "External link" : "Tautan eksternal"}
+          />
+          <Toggle
+            checked={!!form.is_visible}
+            onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
+            label={lang === "en" ? "Visible" : "Tampil"}
+          />
+        </div>
         <div
           style={{
-            position: "absolute",
-            top: 2,
-            left: checked ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "white",
-            transition: "left 0.2s",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            display: "flex",
+            gap: 10,
+            paddingTop: 16,
+            borderTop: "1px solid var(--color-border)",
           }}
-        />
+        >
+          <button
+            onClick={onSave}
+            disabled={isPending}
+            className="btn-primary"
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            {isPending
+              ? lang === "en"
+                ? "Saving..."
+                : "Menyimpan..."
+              : lang === "en"
+                ? "Save"
+                : "Simpan"}
+          </button>
+          <button onClick={onClose} className="btn-secondary">
+            {lang === "en" ? "Cancel" : "Batal"}
+          </button>
+        </div>
       </div>
-      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
-        {label}
-      </span>
-    </label>
+    </ModalShell>
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function NavigationPage() {
   const qc = useQueryClient();
   const { lang } = useLanguageStore();
@@ -160,14 +215,6 @@ export default function NavigationPage() {
       </div>
     );
 
-  const cardStyle = {
-    background: "var(--color-surface-card)",
-    border: "1px solid var(--color-border)",
-    borderRadius: 16,
-    backdropFilter: "blur(16px)",
-    overflow: "hidden" as const,
-  };
-
   return (
     <div className="admin-page">
       <div className="admin-page-header">
@@ -187,205 +234,26 @@ export default function NavigationPage() {
         </button>
       </div>
 
-      {/* Modal */}
       {editing && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            zIndex: 50,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-          }}
-        >
-          <div
-            style={{
-              ...cardStyle,
-              width: "100%",
-              maxWidth: 480,
-              padding: "clamp(20px, 3vw, 32px)",
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 24,
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {editing === "new"
-                  ? lang === "en"
-                    ? "Add Nav Item"
-                    : "Tambah Item Nav"
-                  : lang === "en"
-                    ? "Edit Nav Item"
-                    : "Edit Item Nav"}
-              </h2>
-              <button
-                onClick={() => setEditing(null)}
-                style={{
-                  padding: 6,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--color-text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: 6,
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div>
-                <FieldLabel
-                  text={`${lang === "en" ? "Label" : "Label"} (EN)`}
-                />
-                <input
-                  className="input-cyber"
-                  value={form.label?.en || ""}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      label: { en: e.target.value, id: p.label?.id ?? "" },
-                    }))
-                  }
-                  placeholder={lang === "en" ? "e.g. About" : "mis. Tentang"}
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${lang === "en" ? "Label" : "Label"} (ID)`}
-                />
-                <input
-                  className="input-cyber"
-                  value={form.label?.id || ""}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      label: { en: p.label?.en ?? "", id: e.target.value },
-                    }))
-                  }
-                  placeholder={lang === "en" ? "e.g. Tentang" : "mis. Tentang"}
-                />
-              </div>
-              <div>
-                <FieldLabel text="Href" />
-                <input
-                  className="input-cyber"
-                  value={form.href || ""}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, href: e.target.value }))
-                  }
-                  placeholder="/about"
-                />
-              </div>
-              <div>
-                <FieldLabel text={lang === "en" ? "Sort Order" : "Urutan"} />
-                <input
-                  type="number"
-                  className="input-cyber"
-                  value={form.sort_order || 0}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      sort_order: parseInt(e.target.value),
-                    }))
-                  }
-                />
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-                <Toggle
-                  checked={!!form.is_external}
-                  onChange={(v) => setForm((p) => ({ ...p, is_external: v }))}
-                  label={lang === "en" ? "External link" : "Tautan eksternal"}
-                />
-                <Toggle
-                  checked={!!form.is_visible}
-                  onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
-                  label={lang === "en" ? "Visible" : "Tampil"}
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  paddingTop: 16,
-                  borderTop: "1px solid var(--color-border)",
-                }}
-              >
-                <button
-                  onClick={handleSave}
-                  disabled={createM.isPending || updateM.isPending}
-                  className="btn-primary"
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  {createM.isPending || updateM.isPending
-                    ? lang === "en"
-                      ? "Saving..."
-                      : "Menyimpan..."
-                    : lang === "en"
-                      ? "Save"
-                      : "Simpan"}
-                </button>
-                <button
-                  onClick={() => setEditing(null)}
-                  className="btn-secondary"
-                >
-                  {lang === "en" ? "Cancel" : "Batal"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <NavItemModal
+          editing={editing}
+          form={form}
+          setForm={setForm}
+          isPending={createM.isPending || updateM.isPending}
+          onSave={handleSave}
+          onClose={() => setEditing(null)}
+          lang={lang}
+        />
       )}
 
       <div style={cardStyle}>
         {(items as NavItem[]).length === 0 ? (
-          <div
-            style={{
-              padding: "48px 24px",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              <Navigation size={20} />
-            </div>
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
-              {lang === "en" ? "No nav items yet." : "Belum ada item navigasi."}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Navigation size={20} />}
+            message={
+              lang === "en" ? "No nav items yet." : "Belum ada item navigasi."
+            }
+          />
         ) : (
           (items as NavItem[]).map((item, idx, arr) => (
             <div
@@ -469,53 +337,18 @@ export default function NavigationPage() {
                 )}
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                {[
-                  {
-                    icon: <Pencil size={13} />,
-                    onClick: () => openEdit(item),
-                    hover: "accent",
-                  },
-                  {
-                    icon: <Trash2 size={13} />,
-                    onClick: () => {
-                      if (confirm(lang === "en" ? "Delete?" : "Hapus?"))
-                        deleteM.mutate(item.id);
-                    },
-                    hover: "red",
-                  },
-                ].map((btn, i) => (
-                  <button
-                    key={i}
-                    onClick={btn.onClick}
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color =
-                        btn.hover === "red"
-                          ? "#f87171"
-                          : "var(--color-accent-bright)";
-                      e.currentTarget.style.borderColor =
-                        btn.hover === "red"
-                          ? "rgba(248,113,113,0.4)"
-                          : "var(--color-accent)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
-                  >
-                    {btn.icon}
-                  </button>
-                ))}
+                <IconBtn onClick={() => openEdit(item)}>
+                  <Pencil size={13} />
+                </IconBtn>
+                <IconBtn
+                  variant="danger"
+                  onClick={() => {
+                    if (confirm(lang === "en" ? "Delete?" : "Hapus?"))
+                      deleteM.mutate(item.id);
+                  }}
+                >
+                  <Trash2 size={13} />
+                </IconBtn>
               </div>
             </div>
           ))

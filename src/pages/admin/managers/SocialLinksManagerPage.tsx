@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
 import type { SocialLink } from "@/types";
+import { FieldLabel, Toggle, IconBtn, EmptyState } from "./_shared";
+import { cardStyle, cardStyleNoOverflow } from "./_styles";
 
 const PLATFORMS = [
   "github",
@@ -56,6 +58,164 @@ const BLANK: LinkForm = {
   open_in_new_tab: true,
 };
 
+// ── Sub-component ──────────────────────────────────────────────────────────────
+function SocialLinkForm({
+  form,
+  setForm,
+  editId,
+  isPending,
+  onSubmit,
+  onCancel,
+  lang,
+}: {
+  form: LinkForm;
+  setForm: React.Dispatch<React.SetStateAction<LinkForm>>;
+  editId: string | null;
+  isPending: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+  lang: string;
+}) {
+  return (
+    <div style={{ ...cardStyleNoOverflow, padding: "clamp(20px, 3vw, 28px)" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 15,
+            fontWeight: 700,
+            color: "var(--color-text-primary)",
+          }}
+        >
+          {editId
+            ? lang === "en"
+              ? "Edit Link"
+              : "Edit Link"
+            : lang === "en"
+              ? "New Social Link"
+              : "Link Sosial Baru"}
+        </h2>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={{
+            padding: 6,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "var(--color-text-muted)",
+            display: "flex",
+            alignItems: "center",
+            borderRadius: 6,
+          }}
+        >
+          <X size={16} />
+        </button>
+      </div>
+      <form onSubmit={onSubmit}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+            marginBottom: 16,
+          }}
+        >
+          <div>
+            <FieldLabel text="Platform" />
+            <select
+              className="input-cyber"
+              value={form.platform}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, platform: e.target.value }))
+              }
+              style={{ cursor: "pointer" }}
+            >
+              {PLATFORMS.map((pl) => (
+                <option key={pl} value={pl}>
+                  {pl.charAt(0).toUpperCase() + pl.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel text="Label" />
+            <input
+              className="input-cyber"
+              value={form.label}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, label: e.target.value }))
+              }
+              placeholder={lang === "en" ? "e.g. GitHub" : "mis. GitHub"}
+            />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FieldLabel text="URL *" />
+            <input
+              className="input-cyber"
+              value={form.url}
+              onChange={(e) => setForm((p) => ({ ...p, url: e.target.value }))}
+              placeholder="https://github.com/username"
+              required
+            />
+          </div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 20,
+            marginBottom: 20,
+          }}
+        >
+          <Toggle
+            checked={form.is_visible}
+            onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
+            label={lang === "en" ? "Visible on site" : "Tampil di situs"}
+          />
+          <Toggle
+            checked={form.open_in_new_tab}
+            onChange={(v) => setForm((p) => ({ ...p, open_in_new_tab: v }))}
+            label={lang === "en" ? "Open in new tab" : "Buka di tab baru"}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            paddingTop: 16,
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          <button type="submit" disabled={isPending} className="btn-primary">
+            {isPending
+              ? lang === "en"
+                ? "Saving..."
+                : "Menyimpan..."
+              : editId
+                ? lang === "en"
+                  ? "Update Link"
+                  : "Perbarui Link"
+                : lang === "en"
+                  ? "Add Link"
+                  : "Tambah Link"}
+          </button>
+          <button type="button" onClick={onCancel} className="btn-secondary">
+            {lang === "en" ? "Cancel" : "Batal"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function SocialLinksManagerPage() {
   const qc = useQueryClient();
   const { lang } = useLanguageStore();
@@ -70,7 +230,7 @@ export default function SocialLinksManagerPage() {
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin-social-links"] });
-    qc.invalidateQueries({ queryKey: ["social-links"] }); // refresh public cache too
+    qc.invalidateQueries({ queryKey: ["social-links"] });
   };
 
   const createLink = useMutation({
@@ -84,7 +244,6 @@ export default function SocialLinksManagerPage() {
     onError: () =>
       toast.error(lang === "en" ? "Failed to add" : "Gagal menambahkan"),
   });
-
   const updateLink = useMutation({
     mutationFn: ({ id, data }: { id: string; data: object }) =>
       adminAPI.updateSocialLink(id, data),
@@ -97,7 +256,6 @@ export default function SocialLinksManagerPage() {
     onError: () =>
       toast.error(lang === "en" ? "Failed to update" : "Gagal memperbarui"),
   });
-
   const deleteLink = useMutation({
     mutationFn: (id: string) => adminAPI.deleteSocialLink(id),
     onSuccess: () => {
@@ -115,11 +273,8 @@ export default function SocialLinksManagerPage() {
       form.label ||
       form.platform.charAt(0).toUpperCase() + form.platform.slice(1);
     const payload = { ...form, label };
-    if (editId) {
-      updateLink.mutate({ id: editId, data: payload });
-    } else {
-      createLink.mutate(payload);
-    }
+    if (editId) updateLink.mutate({ id: editId, data: payload });
+    else createLink.mutate(payload);
   };
 
   const startEdit = (link: SocialLink) => {
@@ -133,7 +288,6 @@ export default function SocialLinksManagerPage() {
     setEditId(link.id);
     setShowForm(true);
   };
-
   const cancelForm = () => {
     setShowForm(false);
     setEditId(null);
@@ -155,7 +309,6 @@ export default function SocialLinksManagerPage() {
 
   return (
     <div className="admin-page">
-      {/* Header */}
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">
@@ -183,349 +336,44 @@ export default function SocialLinksManagerPage() {
         )}
       </div>
 
-      {/* Form */}
       {showForm && (
-        <div
-          style={{
-            background: "var(--color-surface-card)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 16,
-            padding: "clamp(20px, 3vw, 28px)",
-            backdropFilter: "blur(16px)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 20,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: "var(--color-text-primary)",
-              }}
-            >
-              {editId
-                ? lang === "en"
-                  ? "Edit Link"
-                  : "Edit Link"
-                : lang === "en"
-                  ? "New Social Link"
-                  : "Link Sosial Baru"}
-            </h2>
-            <button
-              type="button"
-              onClick={cancelForm}
-              style={{
-                padding: 6,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                color: "var(--color-text-muted)",
-                display: "flex",
-                alignItems: "center",
-                borderRadius: 6,
-              }}
-            >
-              <X size={16} />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: 16,
-                marginBottom: 16,
-              }}
-            >
-              {/* Platform */}
-              <div>
-                <label
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "var(--color-text-muted)",
-                    display: "block",
-                    marginBottom: 8,
-                  }}
-                >
-                  {lang === "en" ? "Platform" : "Platform"}
-                </label>
-                <select
-                  className="input-cyber"
-                  value={form.platform}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, platform: e.target.value }))
-                  }
-                  style={{ cursor: "pointer" }}
-                >
-                  {PLATFORMS.map((pl) => (
-                    <option key={pl} value={pl}>
-                      {pl.charAt(0).toUpperCase() + pl.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Label */}
-              <div>
-                <label
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "var(--color-text-muted)",
-                    display: "block",
-                    marginBottom: 8,
-                  }}
-                >
-                  {lang === "en" ? "Label" : "Label"}
-                </label>
-                <input
-                  className="input-cyber"
-                  value={form.label}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, label: e.target.value }))
-                  }
-                  placeholder={lang === "en" ? "e.g. GitHub" : "mis. GitHub"}
-                />
-              </div>
-
-              {/* URL */}
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "var(--color-text-muted)",
-                    display: "block",
-                    marginBottom: 8,
-                  }}
-                >
-                  URL *
-                </label>
-                <input
-                  className="input-cyber"
-                  value={form.url}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, url: e.target.value }))
-                  }
-                  placeholder="https://github.com/username"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Toggles */}
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 20,
-                marginBottom: 20,
-              }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  onClick={() =>
-                    setForm((p) => ({ ...p, is_visible: !p.is_visible }))
-                  }
-                  style={{
-                    position: "relative",
-                    width: 36,
-                    height: 20,
-                    borderRadius: 999,
-                    background: form.is_visible
-                      ? "var(--color-accent)"
-                      : "var(--color-border)",
-                    transition: "background 0.2s",
-                    flexShrink: 0,
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 2,
-                      left: form.is_visible ? 18 : 2,
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      background: "white",
-                      transition: "left 0.2s",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                </div>
-                <span
-                  style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
-                >
-                  {lang === "en" ? "Visible on site" : "Tampil di situs"}
-                </span>
-              </label>
-
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  onClick={() =>
-                    setForm((p) => ({
-                      ...p,
-                      open_in_new_tab: !p.open_in_new_tab,
-                    }))
-                  }
-                  style={{
-                    position: "relative",
-                    width: 36,
-                    height: 20,
-                    borderRadius: 999,
-                    background: form.open_in_new_tab
-                      ? "var(--color-accent)"
-                      : "var(--color-border)",
-                    transition: "background 0.2s",
-                    flexShrink: 0,
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 2,
-                      left: form.open_in_new_tab ? 18 : 2,
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      background: "white",
-                      transition: "left 0.2s",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                    }}
-                  />
-                </div>
-                <span
-                  style={{ fontSize: 13, color: "var(--color-text-secondary)" }}
-                >
-                  {lang === "en" ? "Open in new tab" : "Buka di tab baru"}
-                </span>
-              </label>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 10,
-                paddingTop: 16,
-                borderTop: "1px solid var(--color-border)",
-              }}
-            >
-              <button
-                type="submit"
-                disabled={createLink.isPending || updateLink.isPending}
-                className="btn-primary"
-              >
-                {createLink.isPending || updateLink.isPending
-                  ? lang === "en"
-                    ? "Saving..."
-                    : "Menyimpan..."
-                  : editId
-                    ? lang === "en"
-                      ? "Update Link"
-                      : "Perbarui Link"
-                    : lang === "en"
-                      ? "Add Link"
-                      : "Tambah Link"}
-              </button>
-              <button
-                type="button"
-                onClick={cancelForm}
-                className="btn-secondary"
-              >
-                {lang === "en" ? "Cancel" : "Batal"}
-              </button>
-            </div>
-          </form>
-        </div>
+        <SocialLinkForm
+          form={form}
+          setForm={setForm}
+          editId={editId}
+          isPending={createLink.isPending || updateLink.isPending}
+          onSubmit={handleSubmit}
+          onCancel={cancelForm}
+          lang={lang}
+        />
       )}
 
-      {/* Links list */}
-      <div
-        style={{
-          background: "var(--color-surface-card)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 16,
-          overflow: "hidden",
-          backdropFilter: "blur(16px)",
-        }}
-      >
+      <div style={cardStyle}>
         {links.length === 0 ? (
-          <div
-            style={{
-              padding: "48px 24px",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              <ExternalLink size={20} />
-            </div>
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
-              {lang === "en"
+          <EmptyState
+            icon={<ExternalLink size={20} />}
+            message={
+              lang === "en"
                 ? "No social links yet."
-                : "Belum ada tautan sosial."}
-            </p>
-            <button
-              onClick={() => {
-                setForm(BLANK);
-                setEditId(null);
-                setShowForm(true);
-              }}
-              className="btn-secondary"
-              style={{ fontSize: 13 }}
-            >
-              <Plus size={14} />
-              {lang === "en" ? "Add your first link" : "Tambah link pertama"}
-            </button>
-          </div>
+                : "Belum ada tautan sosial."
+            }
+            action={
+              <button
+                onClick={() => {
+                  setForm(BLANK);
+                  setEditId(null);
+                  setShowForm(true);
+                }}
+                className="btn-secondary"
+                style={{ fontSize: 13, gap: 6 }}
+              >
+                <Plus size={14} />
+                {lang === "en" ? "Add your first link" : "Tambah link pertama"}
+              </button>
+            }
+          />
         ) : (
           <div>
-            {/* Table header */}
             <div
               style={{
                 display: "grid",
@@ -557,7 +405,6 @@ export default function SocialLinksManagerPage() {
                 </span>
               ))}
             </div>
-
             {links.map((link, idx) => {
               const color =
                 PLATFORM_COLORS[link.platform.toLowerCase()] || "#8b5cf6";
@@ -584,7 +431,6 @@ export default function SocialLinksManagerPage() {
                     (e.currentTarget.style.background = "transparent")
                   }
                 >
-                  {/* Platform + URL */}
                   <div
                     style={{
                       display: "flex",
@@ -636,8 +482,6 @@ export default function SocialLinksManagerPage() {
                       </p>
                     </div>
                   </div>
-
-                  {/* Visibility badge */}
                   <div
                     style={{
                       display: "flex",
@@ -664,8 +508,6 @@ export default function SocialLinksManagerPage() {
                         ? "Hidden"
                         : "Tersembunyi"}
                   </div>
-
-                  {/* Open link */}
                   <a
                     href={link.url}
                     target="_blank"
@@ -695,36 +537,11 @@ export default function SocialLinksManagerPage() {
                   >
                     <ExternalLink size={13} />
                   </a>
-
-                  {/* Edit */}
-                  <button
-                    onClick={() => startEdit(link)}
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color =
-                        "var(--color-accent-bright)";
-                      e.currentTarget.style.borderColor = "var(--color-accent)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
-                  >
+                  <IconBtn onClick={() => startEdit(link)}>
                     <Pencil size={13} />
-                  </button>
-
-                  {/* Delete */}
-                  <button
+                  </IconBtn>
+                  <IconBtn
+                    variant="danger"
                     onClick={() => {
                       if (
                         confirm(
@@ -735,29 +552,9 @@ export default function SocialLinksManagerPage() {
                       )
                         deleteLink.mutate(link.id);
                     }}
-                    style={{
-                      padding: 7,
-                      borderRadius: 7,
-                      border: "1px solid var(--color-border)",
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      color: "var(--color-text-muted)",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#f87171";
-                      e.currentTarget.style.borderColor =
-                        "rgba(248,113,113,0.4)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--color-text-muted)";
-                      e.currentTarget.style.borderColor = "var(--color-border)";
-                    }}
                   >
                     <Trash2 size={13} />
-                  </button>
+                  </IconBtn>
                 </div>
               );
             })}
@@ -765,7 +562,6 @@ export default function SocialLinksManagerPage() {
         )}
       </div>
 
-      {/* Info note */}
       <p
         style={{
           fontSize: 12,
@@ -774,8 +570,8 @@ export default function SocialLinksManagerPage() {
         }}
       >
         {lang === "en"
-          ? "Only visible links appear on the public site. Toggle visibility per link above."
-          : "Hanya link yang terlihat yang muncul di situs publik. Atur visibilitas per link di atas."}
+          ? "Only visible links appear on the public site."
+          : "Hanya link yang terlihat yang muncul di situs publik."}
       </p>
     </div>
   );

@@ -2,16 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminAPI } from "@/api/admin";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  ExternalLink,
-  X,
-  FolderOpen,
-} from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, FolderOpen } from "lucide-react";
 import { FaGithub } from "react-icons/fa6";
 import { useLanguageStore } from "@/store/languageStore";
+import {
+  FieldLabel,
+  Toggle,
+  LangPill,
+  IconBtn,
+  EmptyState,
+  ModalShell,
+} from "./_shared";
+import { cardStyle } from "./_styles";
 
 interface Project {
   id?: string;
@@ -46,120 +48,336 @@ const BLANK: Omit<Project, "id"> = {
   repo_url: "",
 };
 
-function FieldLabel({ text }: { text: string }) {
-  return (
-    <label
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "var(--color-text-muted)",
-        display: "block",
-        marginBottom: 8,
-      }}
-    >
-      {text}
-    </label>
-  );
-}
+type LocKey = "title" | "short_description" | "full_description" | "role";
 
-function LangPill({
-  lang,
-  setLang,
+// ── Sub-component ──────────────────────────────────────────────────────────────
+function ProjectModal({
+  editing,
+  form,
+  setForm,
+  isPending,
+  onSave,
+  onClose,
+  uiLang,
 }: {
-  lang: "en" | "id";
-  setLang: (l: "en" | "id") => void;
+  editing: string;
+  form: Omit<Project, "id">;
+  setForm: React.Dispatch<React.SetStateAction<Omit<Project, "id">>>;
+  isPending: boolean;
+  onSave: () => void;
+  onClose: () => void;
+  uiLang: string;
 }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: 2,
-        background: "var(--color-surface-2)",
-        border: "1px solid var(--color-border)",
-        borderRadius: 6,
-        padding: 2,
-      }}
-    >
-      {(["en", "id"] as const).map((l) => (
-        <button
-          key={l}
-          type="button"
-          onClick={() => setLang(l)}
-          style={{
-            padding: "3px 10px",
-            borderRadius: 4,
-            border: "none",
-            cursor: "pointer",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            background: lang === l ? "var(--color-accent)" : "transparent",
-            color: lang === l ? "white" : "var(--color-text-muted)",
-            transition: "all 0.15s",
-          }}
-        >
-          {l}
-        </button>
-      ))}
-    </div>
-  );
-}
+  const [contentLang, setContentLang] = useState<"en" | "id">("en");
+  const [techInput, setTechInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
 
-function Toggle({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-}) {
+  const setLoc = (key: LocKey, val: string) =>
+    setForm((p) => ({ ...p, [key]: { ...p[key], [contentLang]: val } }));
+  const addTech = () => {
+    if (techInput.trim() && !form.tech_stack.includes(techInput.trim())) {
+      setForm((p) => ({
+        ...p,
+        tech_stack: [...p.tech_stack, techInput.trim()],
+      }));
+      setTechInput("");
+    }
+  };
+  const removeTech = (t: string) =>
+    setForm((p) => ({ ...p, tech_stack: p.tech_stack.filter((x) => x !== t) }));
+  const addTag = () => {
+    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
+      setForm((p) => ({ ...p, tags: [...p.tags, tagInput.trim()] }));
+      setTagInput("");
+    }
+  };
+  const removeTag = (t: string) =>
+    setForm((p) => ({ ...p, tags: p.tags.filter((x) => x !== t) }));
+
   return (
-    <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: "pointer",
-      }}
+    <ModalShell
+      title={
+        editing === "new"
+          ? uiLang === "en"
+            ? "New Project"
+            : "Proyek Baru"
+          : uiLang === "en"
+            ? "Edit Project"
+            : "Edit Proyek"
+      }
+      onClose={onClose}
+      headerRight={<LangPill lang={contentLang} setLang={setContentLang} />}
+      maxWidth={720}
     >
-      <div
-        onClick={() => onChange(!checked)}
-        style={{
-          position: "relative",
-          width: 36,
-          height: 20,
-          borderRadius: 999,
-          background: checked ? "var(--color-accent)" : "var(--color-border)",
-          transition: "background 0.2s",
-          flexShrink: 0,
-          cursor: "pointer",
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div
           style={{
-            position: "absolute",
-            top: 2,
-            left: checked ? 18 : 2,
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            background: "white",
-            transition: "left 0.2s",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
           }}
-        />
+        >
+          <div>
+            <FieldLabel text="Slug" />
+            <input
+              className="input-cyber"
+              value={form.slug}
+              onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
+              placeholder="my-project"
+            />
+          </div>
+          <div>
+            <FieldLabel
+              text={uiLang === "en" ? "Cover Image URL" : "URL Gambar Cover"}
+            />
+            <input
+              className="input-cyber"
+              value={form.cover_image_url}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, cover_image_url: e.target.value }))
+              }
+              placeholder="https://..."
+            />
+          </div>
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Title" : "Judul"} (${contentLang.toUpperCase()})`}
+          />
+          <input
+            className="input-cyber"
+            value={form.title[contentLang]}
+            onChange={(e) => setLoc("title", e.target.value)}
+          />
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Short Description" : "Deskripsi Singkat"} (${contentLang.toUpperCase()})`}
+          />
+          <textarea
+            className="input-cyber"
+            rows={2}
+            style={{ resize: "vertical" }}
+            value={form.short_description[contentLang]}
+            onChange={(e) => setLoc("short_description", e.target.value)}
+          />
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Full Description (Markdown)" : "Deskripsi Lengkap (Markdown)"} (${contentLang.toUpperCase()})`}
+          />
+          <textarea
+            className="input-cyber"
+            rows={8}
+            style={{
+              resize: "vertical",
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+            }}
+            value={form.full_description[contentLang]}
+            onChange={(e) => setLoc("full_description", e.target.value)}
+          />
+        </div>
+        <div>
+          <FieldLabel
+            text={`${uiLang === "en" ? "Role" : "Peran"} (${contentLang.toUpperCase()})`}
+          />
+          <input
+            className="input-cyber"
+            value={form.role[contentLang]}
+            onChange={(e) => setLoc("role", e.target.value)}
+          />
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+          }}
+        >
+          <div>
+            <FieldLabel text="Live Demo URL" />
+            <input
+              className="input-cyber"
+              value={form.live_demo_url}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, live_demo_url: e.target.value }))
+              }
+              placeholder="https://..."
+            />
+          </div>
+          <div>
+            <FieldLabel text="Repository URL" />
+            <input
+              className="input-cyber"
+              value={form.repo_url}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, repo_url: e.target.value }))
+              }
+              placeholder="https://github.com/..."
+            />
+          </div>
+        </div>
+        <div>
+          <FieldLabel text="Tech Stack" />
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input
+              className="input-cyber"
+              style={{ flex: 1 }}
+              value={techInput}
+              onChange={(e) => setTechInput(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && (e.preventDefault(), addTech())
+              }
+              placeholder={
+                uiLang === "en" ? "Add technology..." : "Tambah teknologi..."
+              }
+            />
+            <button
+              type="button"
+              onClick={addTech}
+              className="btn-secondary"
+              style={{ padding: "10px 16px", fontSize: 13 }}
+            >
+              {uiLang === "en" ? "Add" : "Tambah"}
+            </button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {form.tech_stack.map((t) => (
+              <span
+                key={t}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                  background: "rgba(59,130,246,0.1)",
+                  border: "1px solid rgba(59,130,246,0.25)",
+                  fontSize: 12,
+                  color: "var(--color-accent-bright)",
+                }}
+              >
+                {t}
+                <button
+                  onClick={() => removeTech(t)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "inherit",
+                    padding: 0,
+                    lineHeight: 1,
+                    fontSize: 14,
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <FieldLabel text="Tags" />
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input
+              className="input-cyber"
+              style={{ flex: 1 }}
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && (e.preventDefault(), addTag())
+              }
+              placeholder={uiLang === "en" ? "Add tag..." : "Tambah tag..."}
+            />
+            <button
+              type="button"
+              onClick={addTag}
+              className="btn-secondary"
+              style={{ padding: "10px 16px", fontSize: 13 }}
+            >
+              {uiLang === "en" ? "Add" : "Tambah"}
+            </button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {form.tags.map((t) => (
+              <span
+                key={t}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "3px 10px",
+                  borderRadius: 999,
+                  background: "rgba(99,102,241,0.1)",
+                  border: "1px solid rgba(99,102,241,0.25)",
+                  fontSize: 12,
+                  color: "#a5b4fc",
+                }}
+              >
+                {t}
+                <button
+                  onClick={() => removeTag(t)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "inherit",
+                    padding: 0,
+                    lineHeight: 1,
+                    fontSize: 14,
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
+          <Toggle
+            checked={form.is_featured}
+            onChange={(v) => setForm((p) => ({ ...p, is_featured: v }))}
+            label={uiLang === "en" ? "Featured project" : "Proyek unggulan"}
+          />
+          <Toggle
+            checked={form.is_visible}
+            onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
+            label={uiLang === "en" ? "Visible on site" : "Tampil di situs"}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            paddingTop: 16,
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          <button
+            onClick={onSave}
+            disabled={isPending}
+            className="btn-primary"
+            style={{ flex: 1, justifyContent: "center" }}
+          >
+            {isPending
+              ? uiLang === "en"
+                ? "Saving..."
+                : "Menyimpan..."
+              : uiLang === "en"
+                ? "Save Project"
+                : "Simpan Proyek"}
+          </button>
+          <button onClick={onClose} className="btn-secondary">
+            {uiLang === "en" ? "Cancel" : "Batal"}
+          </button>
+        </div>
       </div>
-      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
-        {label}
-      </span>
-    </label>
+    </ModalShell>
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function ProjectsManagerPage() {
   const qc = useQueryClient();
   const { lang: uiLang } = useLanguageStore();
@@ -168,10 +386,7 @@ export default function ProjectsManagerPage() {
     queryFn: adminAPI.getProjects,
   });
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState(BLANK);
-  const [contentLang, setContentLang] = useState<"en" | "id">("en");
-  const [techInput, setTechInput] = useState("");
-  const [tagInput, setTagInput] = useState("");
+  const [form, setForm] = useState<Omit<Project, "id">>(BLANK);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin-projects"] });
@@ -208,7 +423,6 @@ export default function ProjectsManagerPage() {
   const openEdit = async (id: string) => {
     try {
       const d = await adminAPI.getProject(id);
-      // Normalize JSONB fields that might come back as objects
       const project = d as Project;
       const normalize = (v: unknown) => {
         if (!v) return { en: "", id: "" };
@@ -242,30 +456,7 @@ export default function ProjectsManagerPage() {
   const handleSave = () =>
     editing === "new"
       ? createM.mutate(form)
-      : updateM.mutate({ id: editing!, data: form });
-
-  const addTech = () => {
-    if (techInput.trim() && !form.tech_stack.includes(techInput.trim())) {
-      setForm((p) => ({
-        ...p,
-        tech_stack: [...p.tech_stack, techInput.trim()],
-      }));
-      setTechInput("");
-    }
-  };
-  const removeTech = (t: string) =>
-    setForm((p) => ({ ...p, tech_stack: p.tech_stack.filter((x) => x !== t) }));
-  const addTag = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm((p) => ({ ...p, tags: [...p.tags, tagInput.trim()] }));
-      setTagInput("");
-    }
-  };
-  const removeTag = (t: string) =>
-    setForm((p) => ({ ...p, tags: p.tags.filter((x) => x !== t) }));
-  type LocKey = "title" | "short_description" | "full_description" | "role";
-  const setLoc = (key: LocKey, val: string) =>
-    setForm((p) => ({ ...p, [key]: { ...p[key], [contentLang]: val } }));
+      : updateM.mutate({ id: editing!, data: form as Project });
 
   if (isLoading)
     return (
@@ -273,14 +464,6 @@ export default function ProjectsManagerPage() {
         <div className="skeleton" style={{ height: 300, borderRadius: 12 }} />
       </div>
     );
-
-  const cardStyle = {
-    background: "var(--color-surface-card)",
-    border: "1px solid var(--color-border)",
-    borderRadius: 16,
-    backdropFilter: "blur(16px)",
-    overflow: "hidden" as const,
-  };
 
   return (
     <div className="admin-page">
@@ -301,370 +484,19 @@ export default function ProjectsManagerPage() {
         </button>
       </div>
 
-      {/* Modal */}
       {editing && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            zIndex: 50,
-            overflowY: "auto",
-            padding: "16px",
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              ...cardStyle,
-              width: "100%",
-              maxWidth: 720,
-              margin: "32px auto",
-              padding: "clamp(20px, 3vw, 32px)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 24,
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {editing === "new"
-                  ? uiLang === "en"
-                    ? "New Project"
-                    : "Proyek Baru"
-                  : uiLang === "en"
-                    ? "Edit Project"
-                    : "Edit Proyek"}
-              </h2>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <LangPill lang={contentLang} setLang={setContentLang} />
-                <button
-                  onClick={() => setEditing(null)}
-                  style={{
-                    padding: 6,
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    color: "var(--color-text-muted)",
-                    display: "flex",
-                    alignItems: "center",
-                    borderRadius: 6,
-                  }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                <div>
-                  <FieldLabel text="Slug" />
-                  <input
-                    className="input-cyber"
-                    value={form.slug}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, slug: e.target.value }))
-                    }
-                    placeholder="my-project"
-                  />
-                </div>
-                <div>
-                  <FieldLabel
-                    text={
-                      uiLang === "en" ? "Cover Image URL" : "URL Gambar Cover"
-                    }
-                  />
-                  <input
-                    className="input-cyber"
-                    value={form.cover_image_url}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        cover_image_url: e.target.value,
-                      }))
-                    }
-                    placeholder="https://..."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Title" : "Judul"} (${contentLang.toUpperCase()})`}
-                />
-                <input
-                  className="input-cyber"
-                  value={form.title[contentLang]}
-                  onChange={(e) => setLoc("title", e.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Short Description" : "Deskripsi Singkat"} (${contentLang.toUpperCase()})`}
-                />
-                <textarea
-                  className="input-cyber"
-                  rows={2}
-                  style={{ resize: "vertical" }}
-                  value={form.short_description[contentLang]}
-                  onChange={(e) => setLoc("short_description", e.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Full Description (Markdown)" : "Deskripsi Lengkap (Markdown)"} (${contentLang.toUpperCase()})`}
-                />
-                <textarea
-                  className="input-cyber"
-                  rows={8}
-                  style={{
-                    resize: "vertical",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 12,
-                  }}
-                  value={form.full_description[contentLang]}
-                  onChange={(e) => setLoc("full_description", e.target.value)}
-                />
-              </div>
-              <div>
-                <FieldLabel
-                  text={`${uiLang === "en" ? "Role" : "Peran"} (${contentLang.toUpperCase()})`}
-                />
-                <input
-                  className="input-cyber"
-                  value={form.role[contentLang]}
-                  onChange={(e) => setLoc("role", e.target.value)}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                <div>
-                  <FieldLabel text="Live Demo URL" />
-                  <input
-                    className="input-cyber"
-                    value={form.live_demo_url}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, live_demo_url: e.target.value }))
-                    }
-                    placeholder="https://..."
-                  />
-                </div>
-                <div>
-                  <FieldLabel text="Repository URL" />
-                  <input
-                    className="input-cyber"
-                    value={form.repo_url}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, repo_url: e.target.value }))
-                    }
-                    placeholder="https://github.com/..."
-                  />
-                </div>
-              </div>
-
-              {/* Tech Stack */}
-              <div>
-                <FieldLabel text="Tech Stack" />
-                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                  <input
-                    className="input-cyber"
-                    style={{ flex: 1 }}
-                    value={techInput}
-                    onChange={(e) => setTechInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addTech())
-                    }
-                    placeholder={
-                      uiLang === "en"
-                        ? "Add technology..."
-                        : "Tambah teknologi..."
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={addTech}
-                    className="btn-secondary"
-                    style={{ padding: "10px 16px", fontSize: 13 }}
-                  >
-                    {uiLang === "en" ? "Add" : "Tambah"}
-                  </button>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {form.tech_stack.map((t) => (
-                    <span
-                      key={t}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "3px 10px",
-                        borderRadius: 999,
-                        background: "rgba(59,130,246,0.1)",
-                        border: "1px solid rgba(59,130,246,0.25)",
-                        fontSize: 12,
-                        color: "var(--color-accent-bright)",
-                      }}
-                    >
-                      {t}
-                      <button
-                        onClick={() => removeTech(t)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "inherit",
-                          padding: 0,
-                          lineHeight: 1,
-                          fontSize: 14,
-                        }}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <FieldLabel text="Tags" />
-                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                  <input
-                    className="input-cyber"
-                    style={{ flex: 1 }}
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), addTag())
-                    }
-                    placeholder={
-                      uiLang === "en" ? "Add tag..." : "Tambah tag..."
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={addTag}
-                    className="btn-secondary"
-                    style={{ padding: "10px 16px", fontSize: 13 }}
-                  >
-                    {uiLang === "en" ? "Add" : "Tambah"}
-                  </button>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {form.tags.map((t) => (
-                    <span
-                      key={t}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "3px 10px",
-                        borderRadius: 999,
-                        background: "rgba(99,102,241,0.1)",
-                        border: "1px solid rgba(99,102,241,0.25)",
-                        fontSize: 12,
-                        color: "#a5b4fc",
-                      }}
-                    >
-                      {t}
-                      <button
-                        onClick={() => removeTag(t)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: "inherit",
-                          padding: 0,
-                          lineHeight: 1,
-                          fontSize: 14,
-                        }}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
-                <Toggle
-                  checked={form.is_featured}
-                  onChange={(v) => setForm((p) => ({ ...p, is_featured: v }))}
-                  label={
-                    uiLang === "en" ? "Featured project" : "Proyek unggulan"
-                  }
-                />
-                <Toggle
-                  checked={form.is_visible}
-                  onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
-                  label={
-                    uiLang === "en" ? "Visible on site" : "Tampil di situs"
-                  }
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  paddingTop: 16,
-                  borderTop: "1px solid var(--color-border)",
-                }}
-              >
-                <button
-                  onClick={handleSave}
-                  disabled={createM.isPending || updateM.isPending}
-                  className="btn-primary"
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  {createM.isPending || updateM.isPending
-                    ? uiLang === "en"
-                      ? "Saving..."
-                      : "Menyimpan..."
-                    : uiLang === "en"
-                      ? "Save Project"
-                      : "Simpan Proyek"}
-                </button>
-                <button
-                  onClick={() => setEditing(null)}
-                  className="btn-secondary"
-                >
-                  {uiLang === "en" ? "Cancel" : "Batal"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProjectModal
+          editing={editing}
+          form={form}
+          setForm={setForm}
+          isPending={createM.isPending || updateM.isPending}
+          onSave={handleSave}
+          onClose={() => setEditing(null)}
+          uiLang={uiLang}
+        />
       )}
 
-      {/* Projects list */}
       <div style={cardStyle}>
-        {/* Table header */}
         <div
           style={{
             display: "grid",
@@ -695,45 +527,23 @@ export default function ProjectsManagerPage() {
             </span>
           ))}
         </div>
-
         {(projects as Project[]).length === 0 ? (
-          <div
-            style={{
-              padding: "48px 24px",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--color-text-muted)",
-              }}
-            >
-              <FolderOpen size={20} />
-            </div>
-            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
-              {uiLang === "en" ? "No projects yet." : "Belum ada proyek."}
-            </p>
-            <button
-              onClick={openCreate}
-              className="btn-secondary"
-              style={{ fontSize: 13, gap: 6 }}
-            >
-              <Plus size={14} />
-              {uiLang === "en" ? "Add first project" : "Tambah proyek pertama"}
-            </button>
-          </div>
+          <EmptyState
+            icon={<FolderOpen size={20} />}
+            message={uiLang === "en" ? "No projects yet." : "Belum ada proyek."}
+            action={
+              <button
+                onClick={openCreate}
+                className="btn-secondary"
+                style={{ fontSize: 13, gap: 6 }}
+              >
+                <Plus size={14} />
+                {uiLang === "en"
+                  ? "Add first project"
+                  : "Tambah proyek pertama"}
+              </button>
+            }
+          />
         ) : (
           (projects as Project[]).map((p, idx) => (
             <div
@@ -900,31 +710,11 @@ export default function ProjectsManagerPage() {
                     <FaGithub size={12} />
                   </a>
                 )}
-                <button
-                  onClick={() => openEdit(p.id!)}
-                  style={{
-                    padding: 7,
-                    borderRadius: 7,
-                    border: "1px solid var(--color-border)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    color: "var(--color-text-muted)",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "var(--color-accent-bright)";
-                    e.currentTarget.style.borderColor = "var(--color-accent)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--color-text-muted)";
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                  }}
-                >
+                <IconBtn onClick={() => openEdit(p.id!)}>
                   <Pencil size={12} />
-                </button>
-                <button
+                </IconBtn>
+                <IconBtn
+                  variant="danger"
                   onClick={() => {
                     if (
                       confirm(
@@ -935,28 +725,9 @@ export default function ProjectsManagerPage() {
                     )
                       deleteM.mutate(p.id!);
                   }}
-                  style={{
-                    padding: 7,
-                    borderRadius: 7,
-                    border: "1px solid var(--color-border)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    color: "var(--color-text-muted)",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#f87171";
-                    e.currentTarget.style.borderColor = "rgba(248,113,113,0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "var(--color-text-muted)";
-                    e.currentTarget.style.borderColor = "var(--color-border)";
-                  }}
                 >
                   <Trash2 size={12} />
-                </button>
+                </IconBtn>
               </div>
             </div>
           ))
