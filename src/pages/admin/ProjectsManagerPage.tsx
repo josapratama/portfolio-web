@@ -208,10 +208,31 @@ export default function ProjectsManagerPage() {
   const openEdit = async (id: string) => {
     try {
       const d = await adminAPI.getProject(id);
-      setForm(d as Project);
+      // Normalize JSONB fields that might come back as objects
+      const project = d as Project;
+      const normalize = (v: unknown) => {
+        if (!v) return { en: "", id: "" };
+        if (typeof v === "object") return v as { en: string; id: string };
+        try {
+          return JSON.parse(v as string);
+        } catch {
+          return { en: "", id: "" };
+        }
+      };
+      setForm({
+        ...project,
+        title: normalize(project.title),
+        short_description: normalize(project.short_description),
+        full_description: normalize(project.full_description),
+        role: normalize(project.role),
+        tech_stack: project.tech_stack ?? [],
+        tags: project.tags ?? [],
+      });
       setEditing(id);
     } catch {
-      toast.error("Failed to load");
+      toast.error(
+        uiLang === "en" ? "Failed to load project" : "Gagal memuat proyek",
+      );
     }
   };
   const openCreate = () => {
