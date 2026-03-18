@@ -522,7 +522,7 @@ export default function CVBuilder() {
       skills: cats.map((cat) => ({
         id: cat.id,
         category: (lang === "en" ? cat.name?.en : cat.name?.id) ?? "",
-        items: cat.skills
+        items: (cat.skills ?? [])
           .map((s) => (lang === "en" ? s.name?.en : s.name?.id) ?? "")
           .join(", "),
       })),
