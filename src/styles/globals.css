@@ -976,3 +976,42 @@ html.light .input-cyber {
     grid-column: span 1;
   }
 }
+
+/* ── Blog Detail Layout ── */
+.blog-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 32px;
+  align-items: start;
+  padding-bottom: 60px;
+}
+
+/* prose word-break so URLs don't overflow */
+.prose-cyber a,
+.prose-cyber p,
+.prose-cyber li {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .blog-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .blog-detail-layout aside {
+    order: -1;
+  }
+  .blog-detail-layout aside > div {
+    position: static !important;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-detail-layout aside > div {
+    grid-template-columns: 1fr;
+  }
+}

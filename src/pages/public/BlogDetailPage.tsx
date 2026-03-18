@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Clock, Tag } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Tag, BookOpen } from "lucide-react";
 import { publicAPI } from "@/api/public";
 import { useLanguageStore } from "@/store/languageStore";
 import { getText } from "@/types";
@@ -36,16 +36,28 @@ export default function BlogDetailPage() {
         }}
       >
         <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 64, marginBottom: 16 }}>📄</div>
           <h2
             style={{
-              fontSize: "clamp(1.5rem, 4vw, 2rem)",
+              fontSize: "clamp(1.4rem, 4vw, 1.8rem)",
               fontWeight: 800,
               color: "var(--color-text-primary)",
-              marginBottom: 16,
+              marginBottom: 8,
             }}
           >
             {lang === "en" ? "Article Not Found" : "Artikel Tidak Ditemukan"}
           </h2>
+          <p
+            style={{
+              color: "var(--color-text-muted)",
+              marginBottom: 24,
+              fontSize: 14,
+            }}
+          >
+            {lang === "en"
+              ? "This article may have been removed or doesn't exist."
+              : "Artikel ini mungkin telah dihapus atau tidak ada."}
+          </p>
           <Link
             to="/blog"
             style={{
@@ -67,25 +79,35 @@ export default function BlogDetailPage() {
       </div>
     );
 
-  const content =
-    getText(post.content, lang) || getText(post.excerpt, lang) || "";
-  const readTime = Math.max(1, Math.ceil(content.split(/\s+/).length / 200));
+  const content = getText(post.content, lang) || "";
+  const excerpt = getText(post.excerpt, lang) || "";
+  const title = getText(post.title, lang) || "";
+  const readTime = Math.max(
+    1,
+    Math.ceil((content || excerpt).split(/\s+/).length / 200),
+  );
 
   return (
-    <div style={{ paddingTop: 80, minHeight: "100vh" }}>
-      {/* Cover image — flush at top */}
+    <div
+      style={{
+        paddingTop: 80,
+        minHeight: "100vh",
+        background: "var(--color-background)",
+      }}
+    >
+      {/* ── Cover image ── */}
       {post.cover_image_url && (
         <div
           style={{
             width: "100%",
-            height: "clamp(220px, 40vw, 480px)",
+            height: "clamp(200px, 35vw, 440px)",
             overflow: "hidden",
             position: "relative",
           }}
         >
           <img
             src={post.cover_image_url}
-            alt={getText(post.title, lang)}
+            alt={title}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           <div
@@ -93,20 +115,24 @@ export default function BlogDetailPage() {
               position: "absolute",
               inset: 0,
               background:
-                "linear-gradient(to bottom, transparent 40%, var(--color-bg) 100%)",
+                "linear-gradient(to bottom, transparent 50%, var(--color-background) 100%)",
             }}
           />
         </div>
       )}
 
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
-        {/* Header block */}
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          padding: "0 clamp(16px, 4vw, 32px)",
+        }}
+      >
+        {/* ── Back link ── */}
         <div
           style={{
-            marginTop: post.cover_image_url ? -48 : 40,
-            marginBottom: 32,
-            position: "relative",
-            zIndex: 1,
+            paddingTop: post.cover_image_url ? 0 : 40,
+            paddingBottom: 24,
           }}
         >
           <Link
@@ -118,7 +144,6 @@ export default function BlogDetailPage() {
               fontSize: 13,
               color: "var(--color-text-muted)",
               textDecoration: "none",
-              marginBottom: 20,
               transition: "color 0.2s",
             }}
             onMouseEnter={(e) =>
@@ -133,166 +158,312 @@ export default function BlogDetailPage() {
             <ArrowLeft size={14} />
             {lang === "en" ? "Back to Blog" : "Kembali ke Blog"}
           </Link>
+        </div>
 
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginBottom: 14,
-              }}
-            >
-              {post.tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    padding: "3px 10px",
-                    borderRadius: 20,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                    background: "var(--color-accent-dim)",
-                    color: "var(--color-accent-bright)",
-                    border: "1px solid var(--color-accent-dim)",
-                  }}
-                >
-                  <Tag size={9} />
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Title */}
-          <h1
-            style={{
-              fontSize: "clamp(1.75rem, 5vw, 2.75rem)",
-              fontWeight: 900,
-              letterSpacing: "-0.03em",
-              lineHeight: 1.15,
-              color: "var(--color-text-primary)",
-              marginBottom: 12,
-            }}
-          >
-            {getText(post.title, lang)}
-          </h1>
-
-          {/* Excerpt */}
-          {getText(post.excerpt, lang) && (
-            <p
-              style={{
-                fontSize: "clamp(0.9rem, 2vw, 1.05rem)",
-                color: "var(--color-text-secondary)",
-                lineHeight: 1.7,
-                marginBottom: 18,
-              }}
-            >
-              {getText(post.excerpt, lang)}
-            </p>
-          )}
-
-          {/* Meta row */}
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap: 16,
-              paddingBottom: 20,
-              borderBottom: "1px solid var(--color-border)",
-            }}
-          >
-            {post.published_at && (
-              <span
+        {/* ── Two-column layout ── */}
+        <div className="blog-detail-layout">
+          {/* ── Main content ── */}
+          <main style={{ minWidth: 0 }}>
+            {/* Tags */}
+            {post.tags && post.tags.length > 0 && (
+              <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
+                  flexWrap: "wrap",
                   gap: 6,
-                  fontSize: 12,
-                  color: "var(--color-text-muted)",
+                  marginBottom: 16,
                 }}
               >
-                <Calendar size={13} style={{ color: "var(--color-accent)" }} />
-                {format(new Date(post.published_at), "MMMM d, yyyy")}
-              </span>
+                {post.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "3px 10px",
+                      borderRadius: 20,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      background: "var(--color-accent-glow)",
+                      color: "var(--color-accent-bright)",
+                      border: "1px solid rgba(59,130,246,0.2)",
+                    }}
+                  >
+                    <Tag size={9} />
+                    {tag}
+                  </span>
+                ))}
+              </div>
             )}
-            <span
+
+            {/* Title */}
+            <h1
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 12,
-                color: "var(--color-text-muted)",
+                fontSize: "clamp(1.8rem, 5vw, 2.8rem)",
+                fontWeight: 900,
+                letterSpacing: "-0.03em",
+                lineHeight: 1.15,
+                color: "var(--color-text-primary)",
+                marginBottom: 16,
               }}
             >
-              <Clock size={13} style={{ color: "var(--color-accent)" }} />
-              {readTime} {lang === "en" ? "min read" : "menit baca"}
-            </span>
-          </div>
-        </div>
+              {title}
+            </h1>
 
-        {/* Article body */}
-        <div
-          style={{
-            background: "var(--color-surface-alt)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 20,
-            padding: "clamp(24px, 4vw, 48px)",
-            marginBottom: 40,
-          }}
-        >
-          <div className="prose-cyber">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {getText(post.content, lang) || getText(post.excerpt, lang)}
-            </ReactMarkdown>
-          </div>
-        </div>
+            {/* Excerpt / subtitle */}
+            {excerpt && (
+              <p
+                style={{
+                  fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
+                  color: "var(--color-text-secondary)",
+                  lineHeight: 1.7,
+                  marginBottom: 24,
+                  paddingBottom: 24,
+                  borderBottom: "1px solid var(--color-border)",
+                }}
+              >
+                {excerpt}
+              </p>
+            )}
 
-        {/* Footer divider + back link */}
-        <div
-          style={{
-            height: 1,
-            background:
-              "linear-gradient(90deg, transparent, var(--color-accent-dim), transparent)",
-            opacity: 0.4,
-            marginBottom: 32,
-          }}
-        />
-        <Link
-          to="/blog"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 20px",
-            borderRadius: 10,
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-            textDecoration: "none",
-            fontSize: 14,
-            marginBottom: 60,
-            transition: "border-color 0.2s, color 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLAnchorElement;
-            el.style.borderColor = "var(--color-accent)";
-            el.style.color = "var(--color-accent-bright)";
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLAnchorElement;
-            el.style.borderColor = "var(--color-border)";
-            el.style.color = "var(--color-text-secondary)";
-          }}
-        >
-          <ArrowLeft size={14} />
-          {lang === "en" ? "More Articles" : "Artikel Lainnya"}
-        </Link>
+            {/* Article body */}
+            <div
+              style={{
+                background: "var(--color-surface-alt)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 16,
+                padding: "clamp(20px, 4vw, 40px)",
+                marginBottom: 40,
+              }}
+            >
+              {content ? (
+                <div className="prose-cyber">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "40px 0",
+                    color: "var(--color-text-muted)",
+                  }}
+                >
+                  <BookOpen
+                    size={40}
+                    style={{ marginBottom: 12, opacity: 0.4 }}
+                  />
+                  <p style={{ fontSize: 14 }}>
+                    {lang === "en"
+                      ? "No content available yet."
+                      : "Konten belum tersedia."}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer back link */}
+            <Link
+              to="/blog"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 20px",
+                borderRadius: 10,
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-secondary)",
+                textDecoration: "none",
+                fontSize: 14,
+                marginBottom: 60,
+                transition: "border-color 0.2s, color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLAnchorElement;
+                el.style.borderColor = "var(--color-accent)";
+                el.style.color = "var(--color-accent-bright)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLAnchorElement;
+                el.style.borderColor = "var(--color-border)";
+                el.style.color = "var(--color-text-secondary)";
+              }}
+            >
+              <ArrowLeft size={14} />
+              {lang === "en" ? "More Articles" : "Artikel Lainnya"}
+            </Link>
+          </main>
+
+          {/* ── Sidebar ── */}
+          <aside>
+            <div
+              style={{
+                position: "sticky",
+                top: 100,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
+              {/* Meta card */}
+              <div
+                style={{
+                  background: "var(--color-surface-alt)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 16,
+                  padding: 20,
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--color-text-muted)",
+                    marginBottom: 14,
+                  }}
+                >
+                  {lang === "en" ? "Article Info" : "Info Artikel"}
+                </p>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
+                  {post.published_at && (
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: "var(--color-accent-glow)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Calendar
+                          size={14}
+                          style={{ color: "var(--color-accent-bright)" }}
+                        />
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            fontSize: 10,
+                            color: "var(--color-text-muted)",
+                            marginBottom: 2,
+                          }}
+                        >
+                          {lang === "en" ? "Published" : "Diterbitkan"}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: "var(--color-text-primary)",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {format(new Date(post.published_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        background: "var(--color-accent-glow)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Clock
+                        size={14}
+                        style={{ color: "var(--color-accent-bright)" }}
+                      />
+                    </div>
+                    <div>
+                      <p
+                        style={{
+                          fontSize: 10,
+                          color: "var(--color-text-muted)",
+                          marginBottom: 2,
+                        }}
+                      >
+                        {lang === "en" ? "Read time" : "Waktu baca"}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 13,
+                          color: "var(--color-text-primary)",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {readTime} {lang === "en" ? "min" : "menit"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tags card */}
+              {post.tags && post.tags.length > 0 && (
+                <div
+                  style={{
+                    background: "var(--color-surface-alt)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 16,
+                    padding: 20,
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "var(--color-text-muted)",
+                      marginBottom: 12,
+                    }}
+                  >
+                    {lang === "en" ? "Tags" : "Label"}
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {post.tags.map((tag: string) => (
+                      <span
+                        key={tag}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: 20,
+                          fontSize: 12,
+                          background: "var(--color-surface-2)",
+                          color: "var(--color-text-secondary)",
+                          border: "1px solid var(--color-border)",
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
       </div>
     </div>
   );
