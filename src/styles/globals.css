@@ -1015,3 +1015,107 @@ html.light .input-cyber {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Experience Timeline ── */
+.exp-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Vertical line */
+.exp-timeline::before {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    var(--color-accent) 0%,
+    var(--color-border-glow) 60%,
+    transparent 100%
+  );
+  border-radius: 2px;
+}
+
+.exp-item {
+  position: relative;
+  display: flex;
+  gap: 0;
+  padding-bottom: 28px;
+}
+
+.exp-item:last-child {
+  padding-bottom: 0;
+}
+
+/* Dot */
+.exp-dot {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+  z-index: 1;
+}
+
+.exp-dot-inner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  background: var(--color-background);
+  box-shadow: 0 0 0 4px var(--color-accent-glow);
+  transition: box-shadow 0.2s;
+}
+
+.exp-item:hover .exp-dot-inner {
+  box-shadow: 0 0 0 6px var(--color-accent-glow-strong);
+}
+
+/* Card */
+.exp-card {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: clamp(16px, 3vw, 24px);
+  backdrop-filter: blur(16px);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.exp-item:hover .exp-card {
+  border-color: var(--color-border-glow);
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.06);
+}
+
+.exp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 540px) {
+  .exp-timeline::before {
+    display: none;
+  }
+  .exp-dot {
+    display: none;
+  }
+  .exp-card-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .exp-item {
+    padding-bottom: 16px;
+  }
+}
