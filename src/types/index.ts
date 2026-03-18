@@ -211,6 +211,9 @@ export interface ResumeSettings {
   cv_url: string;
   cv_url_id: string;
   cv_source: "url" | "builder";
+  cv_template: string;
+  cv_page_size: string;
+  cv_builder_data: Record<string, unknown>;
   button_label: LocalizedString;
 }
 

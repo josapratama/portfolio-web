@@ -440,15 +440,32 @@ function PreviewModal({
 }
 
 // ── Main CVBuilder ───────────────────────────────────────────────────────────
-export default function CVBuilder() {
+interface CVBuilderProps {
+  initialData?: Partial<CVData>;
+  initialTemplate?: CVTemplate;
+  initialPageSize?: CVPageSize;
+  onSave?: (data: CVData, template: CVTemplate, pageSize: CVPageSize) => void;
+  saving?: boolean;
+}
+
+export default function CVBuilder({
+  initialData,
+  initialTemplate = "classic",
+  initialPageSize = "A4",
+  onSave,
+  saving = false,
+}: CVBuilderProps) {
   const { lang } = useLanguageStore();
   const [source, setSource] = useState<"db" | "manual">("db");
-  const [cv, setCv] = useState<CVData>(BLANK_CV);
+  const [cv, setCv] = useState<CVData>(() => ({
+    ...BLANK_CV,
+    ...(initialData ?? {}),
+  }));
   const [generating, setGenerating] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [template, setTemplate] = useState<CVTemplate>("classic");
-  const [pageSize, setPageSize] = useState<CVPageSize>("A4");
+  const [template, setTemplate] = useState<CVTemplate>(initialTemplate);
+  const [pageSize, setPageSize] = useState<CVPageSize>(initialPageSize);
 
   // DB queries
   const { data: siteRaw } = useQuery({
@@ -1068,6 +1085,23 @@ export default function CVBuilder() {
             <Eye size={15} />
             {lang === "en" ? "Preview PDF" : "Pratinjau PDF"}
           </button>
+          {onSave && (
+            <button
+              type="button"
+              onClick={() => onSave(cv, template, pageSize)}
+              disabled={saving}
+              className="btn-secondary"
+              style={{ gap: 8, fontSize: 14, padding: "11px 22px" }}
+            >
+              {saving
+                ? lang === "en"
+                  ? "Saving..."
+                  : "Menyimpan..."
+                : lang === "en"
+                  ? "Save to Database"
+                  : "Simpan ke Database"}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleDownload}

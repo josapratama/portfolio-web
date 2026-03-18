@@ -4,6 +4,7 @@ import { useLanguageStore } from "@/store/languageStore";
 import { Link2, FileText, CheckCircle2 } from "lucide-react";
 import { useAdminForm, str, loc, bool } from "./_helpers";
 import { Toggle, FieldLabel, SaveBtn, FormCard, LangPill } from "./_shared";
+import type { CVData, CVTemplate, CVPageSize } from "@/features/cv/types";
 
 const CVBuilder = lazy(() => import("@/features/cv/CVBuilder"));
 
@@ -310,7 +311,20 @@ export default function ResumeAdminPage() {
               </div>
             }
           >
-            <CVBuilder />
+            <CVBuilder
+              initialData={values.cv_builder_data as Partial<CVData>}
+              initialTemplate={(values.cv_template as CVTemplate) || "classic"}
+              initialPageSize={(values.cv_page_size as CVPageSize) || "A4"}
+              onSave={(cvData, tmpl, pgSize) => {
+                save(undefined, {
+                  ...values,
+                  cv_builder_data: cvData,
+                  cv_template: tmpl,
+                  cv_page_size: pgSize,
+                });
+              }}
+              saving={mutation.isPending}
+            />
           </Suspense>
         </>
       )}
