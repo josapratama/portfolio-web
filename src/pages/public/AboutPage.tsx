@@ -5,7 +5,7 @@ import { getText } from "@/types";
 import { PageLoadSkeleton } from "@/components/public/LoadingStates";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, MapPin, Mail, Briefcase, Star } from "lucide-react";
 
 export default function AboutPage() {
   const { lang } = useLanguageStore();
@@ -24,164 +24,439 @@ export default function AboutPage() {
 
   if (isLoading) return <PageLoadSkeleton />;
 
+  const fullName = settings?.site?.full_name || "Alex Johnson";
+  const title = settings?.site?.title || "";
+
   return (
-    <div className="page-section">
-      <div className="text-center mb-10 sm:mb-16 animate-fade-in">
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
-          {lang === "en" ? "Get to know me" : "Kenali Saya"}
-        </p>
-        <h1 className="section-title mb-4">
-          {lang === "en" ? (
-            <>
-              Hi, I'm <span>{settings?.site?.full_name || "Alex Johnson"}</span>
-            </>
-          ) : (
-            <>
-              Halo, Perkenalkan{" "}
-              <span>{settings?.site?.full_name || "Alex Johnson"}</span>
-            </>
+    <div style={{ paddingTop: 80 }}>
+      {/* ── HERO HEADER ── */}
+      <div
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(59,130,246,0.04) 0%, transparent 100%)",
+          borderBottom: "1px solid var(--color-border)",
+          padding: "48px 0 40px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1100,
+            margin: "0 auto",
+            padding: "0 24px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--color-accent)",
+              marginBottom: 12,
+            }}
+          >
+            {lang === "en" ? "Get to know me" : "Kenali Saya"}
+          </p>
+          <h1
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3rem)",
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
+              lineHeight: 1.1,
+              color: "var(--color-text-primary)",
+              marginBottom: 10,
+            }}
+          >
+            {lang === "en" ? "Hi, I'm " : "Halo, Perkenalkan "}
+            <span
+              style={{
+                background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              {fullName}
+            </span>
+          </h1>
+          {title && (
+            <p
+              style={{
+                fontSize: "clamp(0.875rem, 2vw, 1rem)",
+                fontWeight: 600,
+                color: "var(--color-accent-bright)",
+                marginBottom: 0,
+              }}
+            >
+              {title}
+            </p>
           )}
-        </h1>
-        <p className="text-accent-bright text-base sm:text-lg font-semibold">
-          {settings?.site?.title}
-        </p>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 mb-16 sm:mb-20">
-        {/* Profile image + quick info */}
-        <div className="flex flex-col items-center lg:items-start gap-6">
-          <div className="w-36 h-36 sm:w-48 sm:h-48 rounded-2xl border border-border-glow overflow-hidden bg-surface-2">
-            {about?.profile_image_url ? (
-              <img
-                src={about.profile_image_url}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold">
-                  {(settings?.site?.full_name || "A")[0]}
+      {/* ── MAIN CONTENT ── */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px" }}>
+        <div className="about-main-grid">
+          {/* LEFT: Profile card */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* Avatar */}
+            <div
+              style={{
+                borderRadius: 20,
+                overflow: "hidden",
+                border: "1px solid var(--color-border-glow)",
+                background: "var(--color-surface-2)",
+                aspectRatio: "1",
+                maxWidth: 260,
+                width: "100%",
+                margin: "0 auto",
+              }}
+            >
+              {about?.profile_image_url ? (
+                <img
+                  src={about.profile_image_url}
+                  alt={fullName}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      "linear-gradient(135deg, var(--color-surface), var(--color-surface-2))",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      fontSize: 32,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {fullName[0]}
+                  </div>
                 </div>
+              )}
+            </div>
+
+            {/* Quick info card */}
+            <div
+              style={{
+                background: "var(--color-surface-card)",
+                border: "1px solid var(--color-border)",
+                borderRadius: 16,
+                padding: "20px 20px",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  marginBottom: 16,
+                }}
+              >
+                {lang === "en" ? "Quick Info" : "Info Singkat"}
+              </p>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {[
+                  {
+                    icon: <MapPin size={13} />,
+                    label: lang === "en" ? "Location" : "Lokasi",
+                    value: settings?.site?.location,
+                  },
+                  {
+                    icon: <Briefcase size={13} />,
+                    label: lang === "en" ? "Experience" : "Pengalaman",
+                    value: `${about?.years_of_experience || 0}+ ${lang === "en" ? "years" : "tahun"}`,
+                  },
+                  {
+                    icon: <Mail size={13} />,
+                    label: "Email",
+                    value: settings?.site?.contact_email,
+                  },
+                  {
+                    icon: <Star size={13} />,
+                    label: "Status",
+                    value: settings?.site?.availability_status,
+                  },
+                ].map(
+                  (row) =>
+                    row.value && (
+                      <div
+                        key={row.label}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 10,
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "var(--color-accent)",
+                            marginTop: 1,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {row.icon}
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <p
+                            style={{
+                              fontSize: 10,
+                              color: "var(--color-text-muted)",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.08em",
+                              marginBottom: 1,
+                            }}
+                          >
+                            {row.label}
+                          </p>
+                          <p
+                            style={{
+                              fontSize: 13,
+                              color: "var(--color-text-secondary)",
+                              wordBreak: "break-all",
+                            }}
+                          >
+                            {row.value}
+                          </p>
+                        </div>
+                      </div>
+                    ),
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Bio + highlights */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            {/* Bio */}
+            <div>
+              <div className="prose-cyber">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {getText(about?.full_bio, lang) ||
+                    getText(about?.short_bio, lang) ||
+                    ""}
+                </ReactMarkdown>
+              </div>
+            </div>
+
+            {/* Highlights */}
+            {(about?.highlights || []).length > 0 && (
+              <div
+                style={{
+                  background: "rgba(59,130,246,0.04)",
+                  border: "1px solid rgba(59,130,246,0.15)",
+                  borderRadius: 16,
+                  padding: "20px 24px",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--color-text-primary)",
+                    marginBottom: 14,
+                  }}
+                >
+                  {lang === "en" ? "Highlights" : "Poin Utama"}
+                </h3>
+                <ul
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  {(about?.highlights || []).map((h, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                        fontSize: 14,
+                        color: "var(--color-text-secondary)",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <CheckCircle2
+                        size={15}
+                        style={{
+                          color: "var(--color-accent)",
+                          marginTop: 2,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {typeof h === "string" ? h : ""}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
-          <div className="card-glass p-4 sm:p-5 w-full space-y-3">
-            <h3 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-widest mb-3">
-              {lang === "en" ? "Quick Info" : "Info Singkat"}
-            </h3>
-            {[
-              {
-                label: lang === "en" ? "Location" : "Lokasi",
-                value: settings?.site?.location,
-              },
-              {
-                label: lang === "en" ? "Experience" : "Pengalaman",
-                value: `${about?.years_of_experience}+ ${lang === "en" ? "years" : "tahun"}`,
-              },
-              { label: "Email", value: settings?.site?.contact_email },
-              {
-                label: lang === "en" ? "Status" : "Status",
-                value: settings?.site?.availability_status,
-              },
-            ].map(
-              (row) =>
-                row.value && (
-                  <div
-                    key={row.label}
-                    className="flex justify-between text-xs sm:text-sm gap-3"
-                  >
-                    <span className="text-text-muted shrink-0">
-                      {row.label}
-                    </span>
-                    <span className="text-text-secondary text-right break-all">
-                      {row.value}
-                    </span>
-                  </div>
-                ),
-            )}
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="lg:col-span-2">
-          <div className="prose-cyber mb-8 sm:mb-10">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {getText(about?.full_bio, lang) ||
-                getText(about?.short_bio, lang) ||
-                ""}
-            </ReactMarkdown>
-          </div>
-          {(about?.highlights || []).length > 0 && (
-            <div className="card-glass p-4 sm:p-6">
-              <h3 className="font-bold text-text-primary mb-4">
-                {lang === "en" ? "Highlights" : "Poin Utama"}
-              </h3>
-              <ul className="space-y-2">
-                {(about?.highlights || []).map((h, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-3 text-xs sm:text-sm text-text-secondary"
-                  >
-                    <CheckCircle2
-                      size={16}
-                      className="text-accent mt-0.5 shrink-0"
-                    />
-                    {typeof h === "string" ? h : ""}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Skills by category */}
+      {/* ── SKILLS ── */}
       {(skills || []).length > 0 && (
-        <div id="skills">
-          <div className="cyber-divider mb-10 sm:mb-12" />
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
-            {lang === "en" ? "Technical Skills" : "Keahlian Teknis"}
-          </p>
-          <h2 className="section-title mb-8 sm:mb-10">
-            {lang === "en" ? (
-              <>
-                Tools & <span>Technologies</span>
-              </>
-            ) : (
-              <>
-                Alat & <span>Teknologi</span>
-              </>
-            )}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {(skills || []).map(
-              (category) =>
-                category.skills.length > 0 && (
-                  <div key={category.id} className="card-glass p-4 sm:p-5">
-                    <h3 className="text-xs font-semibold uppercase tracking-widest text-accent mb-3 sm:mb-4">
-                      {getText(category.name, lang)}
-                    </h3>
-                    <ul className="space-y-2">
-                      {category.skills.map((skill) => (
-                        <li
-                          key={skill.id}
-                          className="flex items-center justify-between text-xs sm:text-sm gap-2"
-                        >
-                          <span className="text-text-secondary truncate">
-                            {getText(skill.name, lang)}
-                          </span>
-                          <span className="tag text-xs shrink-0">
-                            {skill.proficiency_level}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ),
-            )}
+        <div
+          style={{
+            borderTop: "1px solid var(--color-border)",
+            background: "var(--color-surface-alt)",
+          }}
+        >
+          <div
+            style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px" }}
+            id="skills"
+          >
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--color-accent)",
+                marginBottom: 10,
+              }}
+            >
+              {lang === "en" ? "Technical Skills" : "Keahlian Teknis"}
+            </p>
+            <h2
+              style={{
+                fontSize: "clamp(1.5rem, 3vw, 2rem)",
+                fontWeight: 900,
+                color: "var(--color-text-primary)",
+                marginBottom: 32,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {lang === "en" ? (
+                <>
+                  Tools &{" "}
+                  <span
+                    style={{
+                      background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Technologies
+                  </span>
+                </>
+              ) : (
+                <>
+                  Alat &{" "}
+                  <span
+                    style={{
+                      background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Teknologi
+                  </span>
+                </>
+              )}
+            </h2>
+            <div className="skills-grid">
+              {(skills || []).map(
+                (category) =>
+                  category.skills.length > 0 && (
+                    <div
+                      key={category.id}
+                      style={{
+                        background: "var(--color-surface-card)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: 16,
+                        padding: "18px 20px",
+                        backdropFilter: "blur(16px)",
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          color: "var(--color-accent)",
+                          marginBottom: 14,
+                        }}
+                      >
+                        {getText(category.name, lang)}
+                      </h3>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
+                        {category.skills.map((skill) => (
+                          <div
+                            key={skill.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 8,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 13,
+                                color: "var(--color-text-secondary)",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {getText(skill.name, lang)}
+                            </span>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "2px 8px",
+                                background: "rgba(59,130,246,0.1)",
+                                border: "1px solid rgba(59,130,246,0.2)",
+                                borderRadius: 999,
+                                fontSize: 10,
+                                fontWeight: 500,
+                                color: "var(--color-accent-bright)",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {skill.proficiency_level}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ),
+              )}
+            </div>
           </div>
         </div>
       )}
+
+      {/* bottom spacing */}
+      <div style={{ height: 64 }} />
     </div>
   );
 }

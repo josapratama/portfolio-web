@@ -1,35 +1,43 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 
 // Public
-import PublicLayout from '@/components/public/PublicLayout'
-import HomePage from '@/pages/public/HomePage'
-import AboutPage from '@/pages/public/AboutPage'
-import ProjectsPage from '@/pages/public/ProjectsPage'
-import ProjectDetailPage from '@/pages/public/ProjectDetailPage'
-import ExperiencePage from '@/pages/public/ExperiencePage'
-import BlogPage from '@/pages/public/BlogPage'
-import BlogDetailPage from '@/pages/public/BlogDetailPage'
-import ContactPage from '@/pages/public/ContactPage'
-import NotFoundPage from '@/pages/public/NotFoundPage'
+import PublicLayout from "@/components/public/PublicLayout";
+import HomePage from "@/pages/public/HomePage";
+import AboutPage from "@/pages/public/AboutPage";
+import ProjectsPage from "@/pages/public/ProjectsPage";
+import ProjectDetailPage from "@/pages/public/ProjectDetailPage";
+import ExperiencePage from "@/pages/public/ExperiencePage";
+import BlogPage from "@/pages/public/BlogPage";
+import BlogDetailPage from "@/pages/public/BlogDetailPage";
+import ContactPage from "@/pages/public/ContactPage";
+import NotFoundPage from "@/pages/public/NotFoundPage";
 
 // Admin
-import AdminLoginPage from '@/pages/admin/AdminLoginPage'
-import AdminLayout from '@/pages/admin/AdminLayout'
-import DashboardPage from '@/pages/admin/DashboardPage'
-import { SiteSettingsPage, ThemeSettingsPage, LanguageSettingsPage, SEOSettingsPage } from '@/pages/admin/SettingsPages'
-import { HeroAdminPage, AboutAdminPage, ResumeAdminPage, ContactSettingsAdminPage } from '@/pages/admin/ContentAdminPages'
-import SectionVisibilityPage from '@/pages/admin/SectionVisibilityPage'
-import NavigationPage from '@/pages/admin/NavigationPage'
-import BlogManagerPage from '@/pages/admin/BlogManagerPage'
-import ProjectsManagerPage from '@/pages/admin/ProjectsManagerPage'
-import ContactSubmissionsPage from '@/pages/admin/ContactSubmissionsPage'
-
-// For now: simpler re-use with SkillsAdmin stub pages
-function ComingSoon({ title }: { title: string }) {
-  return <div className="card-glass p-10 text-center"><h2 className="text-xl font-bold text-text-primary mb-2">{title}</h2><p className="text-text-secondary">This manager is ready for implementation.</p></div>
-}
+import AdminLoginPage from "@/pages/admin/AdminLoginPage";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import DashboardPage from "@/pages/admin/DashboardPage";
+import {
+  SiteSettingsPage,
+  ThemeSettingsPage,
+  LanguageSettingsPage,
+  SEOSettingsPage,
+} from "@/pages/admin/SettingsPages";
+import {
+  HeroAdminPage,
+  AboutAdminPage,
+  ResumeAdminPage,
+  ContactSettingsAdminPage,
+} from "@/pages/admin/ContentAdminPages";
+import SectionVisibilityPage from "@/pages/admin/SectionVisibilityPage";
+import NavigationPage from "@/pages/admin/NavigationPage";
+import BlogManagerPage from "@/pages/admin/BlogManagerPage";
+import ProjectsManagerPage from "@/pages/admin/ProjectsManagerPage";
+import ContactSubmissionsPage from "@/pages/admin/ContactSubmissionsPage";
+import SkillsManagerPage from "@/pages/admin/SkillsManagerPage";
+import SocialLinksManagerPage from "@/pages/admin/SocialLinksManagerPage";
+import ExperienceManagerPage from "@/pages/admin/ExperienceManagerPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +46,7 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-})
+});
 
 export default function App() {
   return (
@@ -67,10 +75,10 @@ export default function App() {
             {/* Content */}
             <Route path="hero" element={<HeroAdminPage />} />
             <Route path="about" element={<AboutAdminPage />} />
-            <Route path="skills" element={<ComingSoon title="Skills Manager" />} />
-            <Route path="social-links" element={<ComingSoon title="Social Links Manager" />} />
+            <Route path="skills" element={<SkillsManagerPage />} />
+            <Route path="social-links" element={<SocialLinksManagerPage />} />
             <Route path="projects" element={<ProjectsManagerPage />} />
-            <Route path="experience" element={<ComingSoon title="Experience Manager" />} />
+            <Route path="experience" element={<ExperienceManagerPage />} />
             <Route path="blog" element={<BlogManagerPage />} />
 
             {/* Site */}
@@ -81,15 +89,24 @@ export default function App() {
             {/* Settings */}
             <Route path="settings/site" element={<SiteSettingsPage />} />
             <Route path="settings/theme" element={<ThemeSettingsPage />} />
-            <Route path="settings/language" element={<LanguageSettingsPage />} />
+            <Route
+              path="settings/language"
+              element={<LanguageSettingsPage />}
+            />
             <Route path="settings/seo" element={<SEOSettingsPage />} />
 
             {/* Contact */}
-            <Route path="contact/settings" element={<ContactSettingsAdminPage />} />
-            <Route path="contact/submissions" element={<ContactSubmissionsPage />} />
+            <Route
+              path="contact/settings"
+              element={<ContactSettingsAdminPage />}
+            />
+            <Route
+              path="contact/submissions"
+              element={<ContactSubmissionsPage />}
+            />
           </Route>
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
-  )
+  );
 }

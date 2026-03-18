@@ -22,13 +22,23 @@ export default function BlogPage() {
   });
 
   if (isLoading) return <PageLoadSkeleton />;
+
   if (sections?.["blog_page"] === false)
     return (
-      <div className="page-section text-center py-32">
-        <h2 className="section-title mb-4">
+      <div
+        style={{ paddingTop: 80, textAlign: "center", padding: "160px 24px" }}
+      >
+        <h2
+          style={{
+            fontSize: "clamp(1.5rem, 4vw, 2rem)",
+            fontWeight: 800,
+            color: "var(--color-text-primary)",
+            marginBottom: 12,
+          }}
+        >
           {lang === "en" ? "Blog Unavailable" : "Blog Tidak Tersedia"}
         </h2>
-        <p className="text-text-secondary">
+        <p style={{ color: "var(--color-text-secondary)", fontSize: 14 }}>
           {lang === "en"
             ? "The blog section is currently disabled."
             : "Bagian blog saat ini dinonaktifkan."}
@@ -40,141 +50,391 @@ export default function BlogPage() {
   const regular = (posts || []).filter((p) => !p.is_featured);
 
   return (
-    <div className="page-section">
-      <div className="text-center mb-16 animate-fade-in">
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
-          Writing
-        </p>
-        <h1 className="section-title mb-4">
-          {lang === "en" ? (
-            <>
-              The <span>Blog</span>
-            </>
-          ) : (
-            <>
-              Blog <span>Artikel</span>
-            </>
-          )}
-        </h1>
-        <p className="section-subtitle mx-auto text-center">
-          {lang === "en"
-            ? "Thoughts on software engineering, career, and technology."
-            : "Pemikiran tentang rekayasa perangkat lunak, karier, dan teknologi."}
-        </p>
+    <div style={{ paddingTop: 80 }}>
+      {/* Hero header */}
+      <div
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(59,130,246,0.05) 0%, transparent 100%)",
+          borderBottom: "1px solid var(--color-border)",
+          padding: "clamp(40px, 6vw, 72px) 0 clamp(32px, 5vw, 56px)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 900,
+            margin: "0 auto",
+            padding: "0 24px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--color-accent)",
+              marginBottom: 12,
+            }}
+          >
+            Writing
+          </p>
+          <h1
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
+              lineHeight: 1.1,
+              color: "var(--color-text-primary)",
+              marginBottom: 16,
+            }}
+          >
+            {lang === "en" ? (
+              <>
+                The{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Blog
+                </span>
+              </>
+            ) : (
+              <>
+                Blog{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Artikel
+                </span>
+              </>
+            )}
+          </h1>
+          <p
+            style={{
+              fontSize: "clamp(0.875rem, 2vw, 1rem)",
+              color: "var(--color-text-secondary)",
+              maxWidth: 480,
+              margin: "0 auto",
+              lineHeight: 1.7,
+            }}
+          >
+            {lang === "en"
+              ? "Thoughts on software engineering, career, and technology."
+              : "Pemikiran tentang rekayasa perangkat lunak, karier, dan teknologi."}
+          </p>
+        </div>
       </div>
 
-      {(posts || []).length === 0 ? (
-        <EmptyState
-          message={
-            lang === "en" ? "No articles published yet" : "Belum ada artikel"
-          }
-        />
-      ) : (
-        <>
-          {/* Featured posts */}
-          {featured.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">
-                {lang === "en" ? "Featured" : "Unggulan"}
-              </h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                {featured.map((post) => (
-                  <Link
-                    key={post.id}
-                    to={`/blog/${post.slug}`}
-                    className="card-glass group overflow-hidden block"
-                  >
-                    {post.cover_image_url && (
-                      <div className="h-52 overflow-hidden">
-                        <img
-                          src={post.cover_image_url}
-                          alt={getText(post.title, lang)}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                    )}
-                    <div className="p-6">
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {post.tags.slice(0, 3).map((t) => (
-                          <span key={t} className="tag text-xs">
-                            {t}
+      {/* Content */}
+      <div
+        style={{
+          maxWidth: 900,
+          margin: "0 auto",
+          padding: "clamp(32px, 5vw, 64px) 24px",
+        }}
+      >
+        {(posts || []).length === 0 ? (
+          <EmptyState
+            message={
+              lang === "en" ? "No articles published yet" : "Belum ada artikel"
+            }
+          />
+        ) : (
+          <>
+            {/* Featured posts */}
+            {featured.length > 0 && (
+              <div style={{ marginBottom: 48 }}>
+                <p
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "var(--color-text-muted)",
+                    marginBottom: 20,
+                  }}
+                >
+                  {lang === "en" ? "Featured" : "Unggulan"}
+                </p>
+                <div className="blog-featured-grid">
+                  {featured.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/blog/${post.slug}`}
+                      style={{
+                        background: "var(--color-surface-card)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: 16,
+                        overflow: "hidden",
+                        display: "block",
+                        textDecoration: "none",
+                        backdropFilter: "blur(16px)",
+                        transition:
+                          "border-color 0.2s, transform 0.2s, box-shadow 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (
+                          e.currentTarget as HTMLAnchorElement
+                        ).style.borderColor = "var(--color-border-glow)";
+                        (e.currentTarget as HTMLAnchorElement).style.transform =
+                          "translateY(-3px)";
+                        (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                          "0 12px 40px rgba(59,130,246,0.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (
+                          e.currentTarget as HTMLAnchorElement
+                        ).style.borderColor = "var(--color-border)";
+                        (e.currentTarget as HTMLAnchorElement).style.transform =
+                          "translateY(0)";
+                        (e.currentTarget as HTMLAnchorElement).style.boxShadow =
+                          "none";
+                      }}
+                    >
+                      {post.cover_image_url && (
+                        <div style={{ height: 200, overflow: "hidden" }}>
+                          <img
+                            src={post.cover_image_url}
+                            alt={getText(post.title, lang)}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              transition: "transform 0.5s",
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div style={{ padding: "20px 20px 18px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 6,
+                            marginBottom: 10,
+                          }}
+                        >
+                          {post.tags.slice(0, 3).map((t) => (
+                            <span
+                              key={t}
+                              className="tag"
+                              style={{ fontSize: 10 }}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <h3
+                          style={{
+                            fontWeight: 700,
+                            fontSize: 16,
+                            color: "var(--color-text-primary)",
+                            marginBottom: 8,
+                            lineHeight: 1.4,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {getText(post.title, lang)}
+                        </h3>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: "var(--color-text-secondary)",
+                            lineHeight: 1.6,
+                            marginBottom: 14,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {getText(post.excerpt, lang)}
+                        </p>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          {post.published_at && (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                color: "var(--color-text-muted)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <Calendar size={11} />
+                              {format(
+                                new Date(post.published_at),
+                                "MMM d, yyyy",
+                              )}
+                            </span>
+                          )}
+                          <span
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
+                              fontSize: 12,
+                              color: "var(--color-accent-bright)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {lang === "en" ? "Read" : "Baca"}{" "}
+                            <ArrowRight size={12} />
                           </span>
-                        ))}
+                        </div>
                       </div>
-                      <h3 className="font-bold text-lg text-text-primary group-hover:text-accent-bright transition-colors mb-2 line-clamp-2">
-                        {getText(post.title, lang)}
-                      </h3>
-                      <p className="text-sm text-text-secondary line-clamp-2 mb-4">
-                        {getText(post.excerpt, lang)}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        {post.published_at && (
-                          <span className="text-xs text-text-muted flex items-center gap-1">
-                            <Calendar size={11} />{" "}
-                            {format(new Date(post.published_at), "MMM d, yyyy")}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1 text-xs text-accent-bright group-hover:gap-2 transition-all">
-                          {lang === "en" ? "Read" : "Baca"}{" "}
-                          <ArrowRight size={12} />
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Regular posts */}
-          {regular.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-widest text-text-muted mb-6">
-                {lang === "en" ? "All Articles" : "Semua Artikel"}
-              </h2>
-              <div className="space-y-3 sm:space-y-4">
-                {regular.map((post) => (
-                  <Link
-                    key={post.id}
-                    to={`/blog/${post.slug}`}
-                    className="card-glass group flex gap-3 sm:gap-5 p-4 sm:p-5 items-start"
-                  >
-                    {post.cover_image_url && (
-                      <div className="w-16 h-14 sm:w-24 sm:h-20 rounded-lg overflow-hidden shrink-0">
-                        <img
-                          src={post.cover_image_url}
-                          alt={getText(post.title, lang)}
-                          className="w-full h-full object-cover"
-                        />
+            {/* Regular posts */}
+            {regular.length > 0 && (
+              <div>
+                <p
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "var(--color-text-muted)",
+                    marginBottom: 20,
+                  }}
+                >
+                  {lang === "en" ? "All Articles" : "Semua Artikel"}
+                </p>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
+                  {regular.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/blog/${post.slug}`}
+                      style={{
+                        background: "var(--color-surface-card)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: 14,
+                        padding: "16px 18px",
+                        display: "flex",
+                        gap: 16,
+                        alignItems: "flex-start",
+                        textDecoration: "none",
+                        backdropFilter: "blur(16px)",
+                        transition: "border-color 0.2s, background 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (
+                          e.currentTarget as HTMLAnchorElement
+                        ).style.borderColor = "var(--color-border-glow)";
+                        (
+                          e.currentTarget as HTMLAnchorElement
+                        ).style.background = "rgba(59,130,246,0.04)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (
+                          e.currentTarget as HTMLAnchorElement
+                        ).style.borderColor = "var(--color-border)";
+                        (
+                          e.currentTarget as HTMLAnchorElement
+                        ).style.background = "var(--color-surface-card)";
+                      }}
+                    >
+                      {post.cover_image_url && (
+                        <div
+                          style={{
+                            width: 72,
+                            height: 60,
+                            borderRadius: 10,
+                            overflow: "hidden",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <img
+                            src={post.cover_image_url}
+                            alt={getText(post.title, lang)}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 5,
+                            marginBottom: 6,
+                          }}
+                        >
+                          {post.tags.slice(0, 2).map((t) => (
+                            <span
+                              key={t}
+                              className="tag"
+                              style={{ fontSize: 10 }}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                        <h3
+                          style={{
+                            fontWeight: 600,
+                            fontSize: 14,
+                            color: "var(--color-text-primary)",
+                            lineHeight: 1.4,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {getText(post.title, lang)}
+                        </h3>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap gap-1.5 mb-1.5">
-                        {post.tags.slice(0, 2).map((t) => (
-                          <span key={t} className="tag text-xs">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                      <h3 className="font-semibold text-xs sm:text-sm text-text-primary group-hover:text-accent-bright transition-colors line-clamp-2 mb-1">
-                        {getText(post.title, lang)}
-                      </h3>
-                      <p className="text-xs text-text-secondary line-clamp-2 hidden sm:block">
-                        {getText(post.excerpt, lang)}
-                      </p>
-                    </div>
-                    {post.published_at && (
-                      <div className="text-xs text-text-muted shrink-0">
-                        {format(new Date(post.published_at), "MMM d")}
-                      </div>
-                    )}
-                  </Link>
-                ))}
+                      {post.published_at && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--color-text-muted)",
+                            flexShrink: 0,
+                            paddingTop: 2,
+                          }}
+                        >
+                          {format(new Date(post.published_at), "MMM d")}
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

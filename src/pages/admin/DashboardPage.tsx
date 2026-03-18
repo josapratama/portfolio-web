@@ -3,6 +3,7 @@ import { adminAPI } from "@/api/admin";
 import { FolderOpen, BookOpen, Code2, Inbox, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { useLanguageStore } from "@/store/languageStore";
 
 interface DashboardData {
   stats: {
@@ -22,80 +23,134 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const { lang } = useLanguageStore();
   const { data: rawData } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: adminAPI.getDashboard,
   });
   const data = rawData as DashboardData | undefined;
-
   const stats = data?.stats || {};
   const recentSubs = data?.recent_submissions ?? [];
 
   const cards = [
     {
-      label: "Published Projects",
+      label: lang === "en" ? "Published Projects" : "Proyek Dipublikasi",
       value: stats.projects ?? "—",
-      icon: <FolderOpen size={20} />,
+      icon: <FolderOpen size={22} />,
       to: "/admin/projects",
-      color: "blue",
     },
     {
-      label: "Blog Posts",
+      label: lang === "en" ? "Blog Posts" : "Postingan Blog",
       value: stats.blog_posts ?? "—",
-      icon: <BookOpen size={20} />,
+      icon: <BookOpen size={22} />,
       to: "/admin/blog",
-      color: "indigo",
     },
     {
-      label: "Skills",
+      label: lang === "en" ? "Skills" : "Keahlian",
       value: stats.skills ?? "—",
-      icon: <Code2 size={20} />,
+      icon: <Code2 size={22} />,
       to: "/admin/skills",
-      color: "cyan",
     },
     {
-      label: "Unread Messages",
+      label: lang === "en" ? "Unread Messages" : "Pesan Belum Dibaca",
       value: stats.unread_submissions ?? "—",
-      icon: <Inbox size={20} />,
+      icon: <Inbox size={22} />,
       to: "/admin/contact/submissions",
-      color: "violet",
     },
   ];
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text-primary">
+    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+      {/* Header */}
+      <div>
+        <h1
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: 800,
+            color: "var(--color-text-primary)",
+            margin: 0,
+          }}
+        >
           Dashboard
         </h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Overview of your portfolio content
+        <p
+          style={{
+            fontSize: "0.875rem",
+            color: "var(--color-text-secondary)",
+            marginTop: "6px",
+          }}
+        >
+          {lang === "en"
+            ? "Overview of your portfolio content"
+            : "Ringkasan konten portofolio Anda"}
         </p>
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "16px",
+        }}
+      >
         {cards.map((card) => (
           <Link
             key={card.label}
             to={card.to}
-            className="card-glass p-4 sm:p-5 flex flex-col gap-3"
+            style={{ textDecoration: "none" }}
           >
-            <div className="flex items-center justify-between">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/10 text-accent-bright">
-                {card.icon}
+            <div
+              className="card-glass"
+              style={{
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "8px",
+                    borderRadius: "8px",
+                    background: "rgba(59,130,246,0.1)",
+                    color: "var(--color-accent-bright)",
+                  }}
+                >
+                  {card.icon}
+                </div>
+                <TrendingUp
+                  size={14}
+                  style={{ color: "var(--color-text-muted)" }}
+                />
               </div>
-              <TrendingUp
-                size={14}
-                className="text-text-muted"
-              />
-            </div>
-            <div>
-              <div className="text-2xl sm:text-3xl font-black text-text-primary">
-                {card.value}
-              </div>
-              <div className="text-xs text-text-muted mt-0.5 leading-tight">
-                {card.label}
+              <div>
+                <div
+                  style={{
+                    fontSize: "2rem",
+                    fontWeight: 900,
+                    color: "var(--color-text-primary)",
+                    lineHeight: 1,
+                  }}
+                >
+                  {card.value}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--color-text-muted)",
+                    marginTop: "6px",
+                  }}
+                >
+                  {card.label}
+                </div>
               </div>
             </div>
           </Link>
@@ -103,43 +158,122 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent submissions */}
-      <div className="card-glass p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-text-primary">
-            Recent Contact Submissions
+      <div className="card-glass" style={{ padding: "24px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "20px",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "1rem",
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+              margin: 0,
+            }}
+          >
+            {lang === "en"
+              ? "Recent Contact Submissions"
+              : "Pesan Kontak Terbaru"}
           </h2>
           <Link
             to="/admin/contact/submissions"
-            className="text-xs text-accent-bright hover:underline"
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--color-accent-bright)",
+              textDecoration: "none",
+            }}
           >
-            View all
+            {lang === "en" ? "View all" : "Lihat semua"}
           </Link>
         </div>
         {recentSubs.length === 0 ? (
-          <p className="text-sm text-text-muted text-center py-8">
-            No submissions yet
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "var(--color-text-muted)",
+              textAlign: "center",
+              padding: "32px 0",
+            }}
+          >
+            {lang === "en" ? "No submissions yet" : "Belum ada pesan"}
           </p>
         ) : (
-          <div className="space-y-3">
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
             {recentSubs.map((sub) => (
               <div
                 key={sub.id}
-                className="flex items-start justify-between gap-4 p-3 rounded-lg bg-surface-2 border border-border"
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  background: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                }}
               >
-                <div className="flex items-start gap-3 min-w-0">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                    minWidth: 0,
+                  }}
+                >
                   {!sub.is_read && (
-                    <div className="w-2 h-2 rounded-full bg-accent mt-1.5 shrink-0" />
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: "var(--color-accent)",
+                        marginTop: "6px",
+                        flexShrink: 0,
+                      }}
+                    />
                   )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                        color: "var(--color-text-primary)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {sub.name}
                     </p>
-                    <p className="text-xs text-text-muted truncate">
-                      {sub.email} — {sub.subject || "(no subject)"}
+                    <p
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--color-text-muted)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {sub.email} —{" "}
+                      {sub.subject ||
+                        (lang === "en" ? "(no subject)" : "(tanpa subjek)")}
                     </p>
                   </div>
                 </div>
-                <span className="text-xs text-text-muted shrink-0">
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--color-text-muted)",
+                    flexShrink: 0,
+                  }}
+                >
                   {format(new Date(sub.created_at), "MMM d")}
                 </span>
               </div>

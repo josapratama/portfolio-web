@@ -1,11 +1,50 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon, Globe, Download } from "lucide-react";
+import { Menu, X, Sun, Moon, Download } from "lucide-react";
 import { useThemeStore } from "@/store/themeStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { useQuery } from "@tanstack/react-query";
 import { publicAPI } from "@/api/public";
 import { getText } from "@/types";
+
+const DEFAULT_NAV = [
+  {
+    id: "home",
+    label: { en: "Home", id: "Beranda" },
+    href: "/",
+    is_external: false,
+  },
+  {
+    id: "about",
+    label: { en: "About", id: "Tentang" },
+    href: "/about",
+    is_external: false,
+  },
+  {
+    id: "projects",
+    label: { en: "Projects", id: "Proyek" },
+    href: "/projects",
+    is_external: false,
+  },
+  {
+    id: "experience",
+    label: { en: "Experience", id: "Pengalaman" },
+    href: "/experience",
+    is_external: false,
+  },
+  {
+    id: "blog",
+    label: { en: "Blog", id: "Blog" },
+    href: "/blog",
+    is_external: false,
+  },
+  {
+    id: "contact",
+    label: { en: "Contact", id: "Kontak" },
+    href: "/contact",
+    is_external: false,
+  },
+];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -37,9 +76,15 @@ export default function Navbar() {
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    const t = setTimeout(() => setOpen(false), 0);
+    return () => clearTimeout(t);
+  }, [location.pathname]);
 
   const brandName = settings?.site?.brand_name || "DevPortfolio";
   const enableThemeSwitcher = settings?.theme?.enable_theme_switcher !== false;
@@ -47,148 +92,425 @@ export default function Navbar() {
     settings?.language?.enable_language_switcher !== false;
   const showBlog = sections?.["blog_page"] !== false;
 
-  const navItems = nav || [];
+  const rawNav = nav && nav.length > 0 ? nav : DEFAULT_NAV;
+  const filteredNav = rawNav.filter(
+    (item) => !(item.href === "/blog" && !showBlog),
+  );
 
-  const filteredNav = navItems.filter((item) => {
-    if (item.href === "/blog" && !showBlog) return false;
-    return true;
-  });
+  const isActive = (href: string) =>
+    href === "/"
+      ? location.pathname === "/"
+      : location.pathname.startsWith(href);
+
+  const iconBtnStyle: React.CSSProperties = {
+    padding: "7px 8px",
+    borderRadius: 8,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    color: "var(--color-text-secondary)",
+    transition: "all 0.15s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    fontSize: 12,
+    fontWeight: 600,
+  };
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-background/90 backdrop-blur-xl border-b border-border"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-sm group-hover:shadow-[0_0_16px_rgba(59,130,246,0.6)] transition-shadow">
-              {brandName[0]}
-            </div>
-            <span className="font-bold text-text-primary hidden sm:block">
-              {brandName}
-            </span>
-          </Link>
+    <>
+      <header
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          transition: "all 0.3s ease",
+          background: scrolled ? "var(--color-surface-overlay)" : "transparent",
+          backdropFilter: scrolled ? "blur(20px)" : "none",
+          borderBottom: scrolled
+            ? "1px solid var(--color-border)"
+            : "1px solid transparent",
+          boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,0.15)" : "none",
+        }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              height: 64,
+            }}
+          >
+            {/* Logo */}
+            <Link
+              to="/"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                textDecoration: "none",
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  boxShadow: "0 0 16px rgba(59,130,246,0.4)",
+                }}
+              >
+                {brandName[0]}
+              </div>
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: "var(--color-text-primary)",
+                  fontSize: 15,
+                }}
+              >
+                {brandName}
+              </span>
+            </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {filteredNav.map((item) =>
-              item.is_external ? (
+            {/* Desktop nav */}
+            <nav
+              style={{ display: "flex", alignItems: "center", gap: 2 }}
+              className="navbar-desktop"
+            >
+              {filteredNav.map((item) => {
+                const active = isActive(item.href);
+                const label = getText(item.label, lang);
+                return item.is_external ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: "6px 13px",
+                      borderRadius: 8,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: "var(--color-text-secondary)",
+                      textDecoration: "none",
+                      transition: "all 0.15s ease",
+                    }}
+                    className="navbar-link"
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.id}
+                    to={item.href}
+                    style={{
+                      padding: "6px 13px",
+                      borderRadius: 8,
+                      fontSize: 14,
+                      fontWeight: active ? 600 : 500,
+                      color: active
+                        ? "var(--color-accent-bright)"
+                        : "var(--color-text-secondary)",
+                      textDecoration: "none",
+                      background: active
+                        ? "rgba(59,130,246,0.1)"
+                        : "transparent",
+                      transition: "all 0.15s ease",
+                    }}
+                    className="navbar-link"
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Right controls */}
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {/* Language toggle */}
+              {enableLangSwitcher && (
+                <button
+                  onClick={() => setLang(lang === "en" ? "id" : "en")}
+                  style={iconBtnStyle}
+                  className="navbar-icon-btn"
+                  title="Switch language"
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {lang === "en" ? "ID" : "EN"}
+                  </span>
+                </button>
+              )}
+
+              {/* Theme toggle */}
+              {enableThemeSwitcher && (
+                <button
+                  onClick={toggle}
+                  style={iconBtnStyle}
+                  className="navbar-icon-btn"
+                  title="Toggle theme"
+                >
+                  {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              )}
+
+              {/* CV button */}
+              {resume?.enable_cv_download && resume?.cv_url && (
                 <a
-                  key={item.id}
-                  href={item.href}
+                  href={
+                    lang === "id" && resume.cv_url_id
+                      ? resume.cv_url_id
+                      : resume.cv_url
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`nav-item text-sm`}
+                  className="btn-primary navbar-cv-btn"
+                  style={{
+                    fontSize: 12,
+                    padding: "7px 14px",
+                    gap: 6,
+                    marginLeft: 4,
+                  }}
                 >
-                  {getText(item.label, lang)}
+                  <Download size={13} />
+                  {getText(resume.button_label, lang) || "CV"}
                 </a>
-              ) : (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  className={`nav-item text-sm ${location.pathname === item.href ? "active" : ""}`}
-                >
-                  {getText(item.label, lang)}
-                </Link>
-              ),
-            )}
-          </nav>
+              )}
 
-          {/* Right controls */}
-          <div className="flex items-center gap-2">
-            {/* Language switcher */}
-            {enableLangSwitcher && (
+              {/* Mobile hamburger */}
               <button
-                onClick={() => setLang(lang === "en" ? "id" : "en")}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-accent-bright hover:bg-accent-glow transition-all"
-                title="Switch language"
+                onClick={() => setOpen(!open)}
+                style={{ ...iconBtnStyle, display: "none" }}
+                className="navbar-hamburger"
+                aria-label="Toggle menu"
               >
-                <Globe size={14} />
-                <span className="uppercase">{lang}</span>
+                {open ? <X size={22} /> : <Menu size={22} />}
               </button>
-            )}
-
-            {/* Theme switcher */}
-            {enableThemeSwitcher && (
-              <button
-                onClick={toggle}
-                className="p-2 rounded-lg text-text-secondary hover:text-accent-bright hover:bg-accent-glow transition-all"
-                title="Toggle theme"
-              >
-                {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-            )}
-
-            {/* CV Download */}
-            {resume?.enable_cv_download && resume?.cv_url && (
-              <a
-                href={resume.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex btn-primary text-xs py-2 px-3 gap-1.5"
-              >
-                <Download size={13} />
-                {getText(resume.button_label, lang)}
-              </a>
-            )}
-
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setOpen(!open)}
-              className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-2 transition-all"
-            >
-              {open ? <X size={20} /> : <Menu size={20} />}
-            </button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border px-4 pb-4">
-          <nav className="flex flex-col gap-1 pt-2">
-            {filteredNav.map((item) =>
-              item.is_external ? (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 49,
+            background: "var(--color-surface-overlay)",
+            backdropFilter: "blur(24px)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Header row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 20px",
+              height: 64,
+              borderBottom: "1px solid var(--color-border)",
+            }}
+          >
+            <Link
+              to="/"
+              onClick={() => setOpen(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                textDecoration: "none",
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 9,
+                  background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: 13,
+                }}
+              >
+                {brandName[0]}
+              </div>
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: "var(--color-text-primary)",
+                  fontSize: 14,
+                }}
+              >
+                {brandName}
+              </span>
+            </Link>
+            <button
+              onClick={() => setOpen(false)}
+              style={{ ...iconBtnStyle, padding: 8 }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Nav links */}
+          <nav style={{ flex: 1, padding: "16px 16px 0", overflowY: "auto" }}>
+            {filteredNav.map((item) => {
+              const active = isActive(item.href);
+              const label = getText(item.label, lang);
+              return item.is_external ? (
                 <a
                   key={item.id}
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="nav-item"
                   onClick={() => setOpen(false)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "13px 16px",
+                    borderRadius: 12,
+                    marginBottom: 4,
+                    fontSize: 15,
+                    fontWeight: 500,
+                    color: "var(--color-text-secondary)",
+                    textDecoration: "none",
+                  }}
                 >
-                  {getText(item.label, lang)}
+                  {label}
                 </a>
               ) : (
                 <Link
                   key={item.id}
                   to={item.href}
-                  className={`nav-item ${location.pathname === item.href ? "active" : ""}`}
                   onClick={() => setOpen(false)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "13px 16px",
+                    borderRadius: 12,
+                    marginBottom: 4,
+                    fontSize: 15,
+                    fontWeight: active ? 700 : 500,
+                    color: active
+                      ? "var(--color-accent-bright)"
+                      : "var(--color-text-secondary)",
+                    textDecoration: "none",
+                    background: active ? "rgba(59,130,246,0.1)" : "transparent",
+                  }}
                 >
-                  {getText(item.label, lang)}
+                  {label}
+                  {active && (
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: "50%",
+                        background: "var(--color-accent)",
+                      }}
+                    />
+                  )}
                 </Link>
-              ),
-            )}
+              );
+            })}
+          </nav>
+
+          {/* Bottom controls */}
+          <div
+            style={{
+              padding: "16px 16px 32px",
+              borderTop: "1px solid var(--color-border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
             {resume?.enable_cv_download && resume?.cv_url && (
               <a
-                href={resume.cv_url}
+                href={
+                  lang === "id" && resume.cv_url_id
+                    ? resume.cv_url_id
+                    : resume.cv_url
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary mt-2 justify-center text-sm"
+                className="btn-primary"
+                onClick={() => setOpen(false)}
+                style={{ justifyContent: "center" }}
               >
-                <Download size={14} />
-                {getText(resume.button_label, lang)}
+                <Download size={15} />{" "}
+                {getText(resume.button_label, lang) || "Download CV"}
               </a>
             )}
-          </nav>
+            <div style={{ display: "flex", gap: 10 }}>
+              {enableLangSwitcher && (
+                <button
+                  onClick={() => setLang(lang === "en" ? "id" : "en")}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: "10px 16px",
+                    borderRadius: 10,
+                    border: "1px solid var(--color-border)",
+                    background: "transparent",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  {lang === "en" ? "🇮🇩 Bahasa" : "🇬🇧 English"}
+                </button>
+              )}
+              {enableThemeSwitcher && (
+                <button
+                  onClick={toggle}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    border: "1px solid var(--color-border)",
+                    background: "transparent",
+                    cursor: "pointer",
+                    color: "var(--color-text-secondary)",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
-    </header>
+    </>
   );
 }

@@ -1,81 +1,359 @@
-import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { ExternalLink, Github, ArrowRight } from 'lucide-react'
-import { publicAPI } from '@/api/public'
-import { useLanguageStore } from '@/store/languageStore'
-import { getText } from '@/types'
-import { PageLoadSkeleton, EmptyState } from '@/components/public/LoadingStates'
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { ExternalLink, ArrowRight } from "lucide-react";
+import { FaGithub } from "react-icons/fa6";
+import { publicAPI } from "@/api/public";
+import { useLanguageStore } from "@/store/languageStore";
+import { getText } from "@/types";
+import {
+  PageLoadSkeleton,
+  EmptyState,
+} from "@/components/public/LoadingStates";
 
 export default function ProjectsPage() {
-  const { lang } = useLanguageStore()
-  const { data: projects, isLoading } = useQuery({ queryKey: ['projects'], queryFn: publicAPI.getProjects })
+  const { lang } = useLanguageStore();
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: publicAPI.getProjects,
+  });
 
-  if (isLoading) return <PageLoadSkeleton />
+  if (isLoading) return <PageLoadSkeleton />;
 
   return (
-    <div className="page-section">
-      <div className="text-center mb-16 animate-fade-in">
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">Portfolio</p>
-        <h1 className="section-title mb-4">{lang === 'en' ? <>My <span>Projects</span></> : <><span>Proyek</span> Saya</>}</h1>
-        <p className="section-subtitle mx-auto text-center">
-          {lang === 'en' ? 'A collection of projects I have built, contributed to, or am currently working on.' : 'Kumpulan proyek yang telah saya bangun, kontribusikan, atau sedang kerjakan.'}
-        </p>
+    <div style={{ paddingTop: 80 }}>
+      {/* Hero header */}
+      <div
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(59,130,246,0.05) 0%, transparent 100%)",
+          borderBottom: "1px solid var(--color-border)",
+          padding: "clamp(40px, 6vw, 72px) 0 clamp(32px, 5vw, 56px)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1100,
+            margin: "0 auto",
+            padding: "0 24px",
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--color-accent)",
+              marginBottom: 12,
+            }}
+          >
+            Portfolio
+          </p>
+          <h1
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
+              lineHeight: 1.1,
+              color: "var(--color-text-primary)",
+              marginBottom: 16,
+            }}
+          >
+            {lang === "en" ? (
+              <>
+                My{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Projects
+                </span>
+              </>
+            ) : (
+              <>
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Proyek
+                </span>{" "}
+                Saya
+              </>
+            )}
+          </h1>
+          <p
+            style={{
+              fontSize: "clamp(0.875rem, 2vw, 1rem)",
+              color: "var(--color-text-secondary)",
+              maxWidth: 520,
+              margin: "0 auto",
+              lineHeight: 1.7,
+            }}
+          >
+            {lang === "en"
+              ? "A collection of projects I have built, contributed to, or am currently working on."
+              : "Kumpulan proyek yang telah saya bangun, kontribusikan, atau sedang kerjakan."}
+          </p>
+        </div>
       </div>
 
-      {(projects || []).length === 0 ? (
-        <EmptyState message={lang === 'en' ? 'No projects yet' : 'Belum ada proyek'} />
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(projects || []).map(project => (
-            <div key={project.id} className="card-glass group overflow-hidden flex flex-col">
-              <div className="h-48 bg-linear-to-br from-surface-2 to-surface relative overflow-hidden">
-                {project.cover_image_url ? (
-                  <img src={project.cover_image_url} alt={getText(project.title, lang)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-text-muted text-5xl font-black opacity-10">{getText(project.title, lang)[0]}</span>
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-linear-to-t from-background/80 to-transparent" />
-                {project.is_featured && (
-                  <div className="absolute top-3 right-3 tag text-xs">Featured</div>
-                )}
-              </div>
-              <div className="p-6 flex flex-col flex-1">
-                <h2 className="font-bold text-text-primary mb-2 group-hover:text-accent-bright transition-colors">
-                  {getText(project.title, lang)}
-                </h2>
-                <p className="text-sm text-text-secondary mb-4 flex-1 line-clamp-3">
-                  {getText(project.short_description, lang)}
-                </p>
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {project.tech_stack.slice(0, 4).map(tech => (
-                    <span key={tech} className="tag text-xs">{tech}</span>
-                  ))}
-                  {project.tech_stack.length > 4 && <span className="tag text-xs">+{project.tech_stack.length - 4}</span>}
+      {/* Content */}
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+          padding: "clamp(32px, 5vw, 64px) 24px",
+        }}
+      >
+        {(projects || []).length === 0 ? (
+          <EmptyState
+            message={lang === "en" ? "No projects yet" : "Belum ada proyek"}
+          />
+        ) : (
+          <div className="projects-grid">
+            {(projects || []).map((project) => (
+              <div
+                key={project.id}
+                style={{
+                  background: "var(--color-surface-card)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  backdropFilter: "blur(16px)",
+                  transition:
+                    "border-color 0.2s, transform 0.2s, box-shadow 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor =
+                    "var(--color-border-glow)";
+                  (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateY(-3px)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow =
+                    "0 12px 40px rgba(59,130,246,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor =
+                    "var(--color-border)";
+                  (e.currentTarget as HTMLDivElement).style.transform =
+                    "translateY(0)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+                }}
+              >
+                {/* Cover image */}
+                <div
+                  style={{
+                    height: 180,
+                    background:
+                      "linear-gradient(135deg, var(--color-surface), var(--color-surface-2))",
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
+                  {project.cover_image_url ? (
+                    <img
+                      src={project.cover_image_url}
+                      alt={getText(project.title, lang)}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        transition: "transform 0.5s",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 56,
+                          fontWeight: 900,
+                          color: "var(--color-border-glow)",
+                          opacity: 0.4,
+                        }}
+                      >
+                        {getText(project.title, lang)[0]}
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(to top, var(--color-surface-alt) 0%, transparent 60%)",
+                    }}
+                  />
+                  {project.is_featured && (
+                    <div style={{ position: "absolute", top: 12, right: 12 }}>
+                      <span className="tag" style={{ fontSize: 10 }}>
+                        Featured
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-3 pt-3 border-t border-border">
-                  <Link to={`/projects/${project.slug}`} className="flex items-center gap-1.5 text-sm text-accent-bright hover:gap-2.5 transition-all font-medium">
-                    {lang === 'en' ? 'Details' : 'Detail'} <ArrowRight size={14} />
-                  </Link>
-                  <div className="flex gap-2 ml-auto">
-                    {project.live_demo_url && (
-                      <a href={project.live_demo_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded text-text-muted hover:text-accent-bright transition-colors" title="Live Demo">
-                        <ExternalLink size={14} />
-                      </a>
+
+                {/* Body */}
+                <div
+                  style={{
+                    padding: "20px 20px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                  }}
+                >
+                  <h2
+                    style={{
+                      fontWeight: 700,
+                      color: "var(--color-text-primary)",
+                      fontSize: 15,
+                      marginBottom: 8,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {getText(project.title, lang)}
+                  </h2>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--color-text-secondary)",
+                      lineHeight: 1.6,
+                      marginBottom: 14,
+                      flex: 1,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {getText(project.short_description, lang)}
+                  </p>
+
+                  {/* Tech stack */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 6,
+                      marginBottom: 16,
+                    }}
+                  >
+                    {project.tech_stack.slice(0, 4).map((tech) => (
+                      <span key={tech} className="tag" style={{ fontSize: 10 }}>
+                        {tech}
+                      </span>
+                    ))}
+                    {project.tech_stack.length > 4 && (
+                      <span className="tag" style={{ fontSize: 10 }}>
+                        +{project.tech_stack.length - 4}
+                      </span>
                     )}
-                    {project.repo_url && (
-                      <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded text-text-muted hover:text-accent-bright transition-colors" title="Repository">
-                        <Github size={14} />
-                      </a>
-                    )}
+                  </div>
+
+                  {/* Footer actions */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      paddingTop: 14,
+                      borderTop: "1px solid var(--color-border)",
+                    }}
+                  >
+                    <Link
+                      to={`/projects/${project.slug}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 13,
+                        color: "var(--color-accent-bright)",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                        transition: "gap 0.2s",
+                      }}
+                    >
+                      {lang === "en" ? "Details" : "Detail"}{" "}
+                      <ArrowRight size={13} />
+                    </Link>
+                    <div
+                      style={{ display: "flex", gap: 8, marginLeft: "auto" }}
+                    >
+                      {project.live_demo_url && (
+                        <a
+                          href={project.live_demo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Live Demo"
+                          style={{
+                            padding: "6px",
+                            borderRadius: 6,
+                            color: "var(--color-text-muted)",
+                            textDecoration: "none",
+                            transition: "color 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLAnchorElement).style.color =
+                              "var(--color-accent-bright)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLAnchorElement).style.color =
+                              "var(--color-text-muted)";
+                          }}
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                      {project.repo_url && (
+                        <a
+                          href={project.repo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Repository"
+                          style={{
+                            padding: "6px",
+                            borderRadius: 6,
+                            color: "var(--color-text-muted)",
+                            textDecoration: "none",
+                            transition: "color 0.2s",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLAnchorElement).style.color =
+                              "var(--color-accent-bright)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLAnchorElement).style.color =
+                              "var(--color-text-muted)";
+                          }}
+                        >
+                          <FaGithub size={14} />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  )
+  );
 }

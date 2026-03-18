@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { NavLink, Outlet, Navigate, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
+import { useLanguageStore } from "@/store/languageStore";
 import { adminAPI } from "@/api/admin";
 import axios from "axios";
 import {
@@ -24,6 +26,9 @@ import {
   LogOut,
   Menu,
   X,
+  Sun,
+  Moon,
+  ExternalLink,
 } from "lucide-react";
 
 interface NavEntry {
@@ -133,7 +138,16 @@ const NAV: NavSection[] = [
 
 function Sidebar({ onClose }: { onClose?: () => void }) {
   const { admin, logout } = useAuthStore();
+  const { lang } = useLanguageStore();
   const navigate = useNavigate();
+
+  const NAV_LABELS: Record<string, string> = {
+    Overview: lang === "en" ? "Overview" : "Ringkasan",
+    Content: lang === "en" ? "Content" : "Konten",
+    Site: lang === "en" ? "Site" : "Situs",
+    Settings: lang === "en" ? "Settings" : "Pengaturan",
+    Contact: lang === "en" ? "Contact" : "Kontak",
+  };
 
   const handleLogout = async () => {
     try {
@@ -146,21 +160,60 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
   };
 
   return (
-    <div className="admin-sidebar h-full flex flex-col overflow-y-auto">
+    <div className="admin-sidebar">
       {/* Brand */}
-      <div className="flex items-center justify-between p-5 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 16px",
+          height: 56,
+          borderBottom: "1px solid var(--color-border)",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              background: "linear-gradient(135deg, #3b82f6, #6366f1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontWeight: 800,
+              fontSize: 13,
+              flexShrink: 0,
+              boxShadow: "0 0 12px rgba(59,130,246,0.3)",
+            }}
+          >
             A
           </div>
-          <span className="font-bold text-sm text-text-primary">
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: 14,
+              color: "var(--color-text-primary)",
+            }}
+          >
             Admin Panel
           </span>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary"
+            style={{
+              padding: 4,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
             <X size={18} />
           </button>
@@ -168,11 +221,21 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-4">
-        {NAV.map((section) => (
-          <div key={section.group}>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted px-3 mb-1">
-              {section.group}
+      <nav style={{ flex: 1, overflowY: "auto", padding: "4px 10px 12px" }}>
+        {NAV.map((section, idx) => (
+          <div key={section.group} style={{ marginTop: idx === 0 ? 10 : 20 }}>
+            <p
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--color-text-muted)",
+                padding: "0 6px",
+                marginBottom: 4,
+              }}
+            >
+              {NAV_LABELS[section.group] || section.group}
             </p>
             {section.items.map((item) => (
               <NavLink
@@ -193,27 +256,96 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* User */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-surface-2 border border-border flex items-center justify-center text-xs font-bold text-accent-bright">
+      <div
+        style={{
+          padding: "12px 16px",
+          borderTop: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--color-accent-bright)",
+                flexShrink: 0,
+              }}
+            >
               {(admin?.name || admin?.email || "A")[0].toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-text-primary truncate">
+            <div style={{ minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {admin?.name || "Admin"}
               </p>
-              <p className="text-[10px] text-text-muted truncate">
-                {admin?.email}
-              </p>
+              {admin?.email && (
+                <p
+                  style={{
+                    fontSize: 10,
+                    color: "var(--color-text-muted)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {admin.email}
+                </p>
+              )}
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="p-1.5 rounded text-text-muted hover:text-red-400 transition-colors"
+            style={{
+              padding: "6px",
+              borderRadius: 6,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+              display: "flex",
+              alignItems: "center",
+              transition: "color 0.15s",
+              flexShrink: 0,
+            }}
             title="Logout"
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "var(--color-text-muted)")
+            }
           >
-            <LogOut size={14} />
+            <LogOut size={15} />
           </button>
         </div>
       </div>
@@ -229,6 +361,8 @@ export default function AdminLayout() {
     setAdmin,
     setInitialized,
   } = useAuthStore();
+  const { theme, toggle: toggleTheme } = useThemeStore();
+  const { lang, setLang } = useLanguageStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -260,9 +394,19 @@ export default function AdminLayout() {
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        background: "var(--color-background)",
+      }}
+    >
       {/* Desktop sidebar */}
-      <div className="hidden md:block">
+      <div
+        style={{ display: "none", flexShrink: 0, width: 220 }}
+        className="admin-sidebar-wrapper"
+      >
         <Sidebar />
       </div>
 
@@ -280,28 +424,124 @@ export default function AdminLayout() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         {/* Top bar */}
-        <header className="h-14 border-b border-border flex items-center justify-between px-4 shrink-0 bg-surface/50 backdrop-blur">
+        <header
+          style={{
+            height: 56,
+            borderBottom: "1px solid var(--color-border)",
+            display: "flex",
+            alignItems: "center",
+            padding: "0 16px",
+            flexShrink: 0,
+            background: "var(--color-surface)",
+            backdropFilter: "blur(12px)",
+            gap: 8,
+          }}
+        >
+          {/* Mobile hamburger — only visible on small screens */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 text-text-secondary"
+            style={{
+              display: "none",
+              padding: 8,
+              borderRadius: 6,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "var(--color-text-secondary)",
+            }}
+            className="topbar-hamburger"
           >
             <Menu size={20} />
           </button>
-          <div className="md:hidden" />
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-text-muted hover:text-accent-bright transition-colors flex items-center gap-1.5"
-          >
-            ↗ View Site
-          </a>
+
+          {/* Spacer — pushes controls to the right */}
+          <div style={{ flex: 1 }} />
+
+          {/* Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {/* Language toggle */}
+            <button
+              onClick={() => setLang(lang === "en" ? "id" : "en")}
+              style={{
+                padding: "5px 10px",
+                borderRadius: 7,
+                border: "1px solid var(--color-border)",
+                background: "transparent",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                color: "var(--color-text-secondary)",
+                transition: "all 0.15s",
+              }}
+              title="Switch language"
+            >
+              {lang === "en" ? "ID" : "EN"}
+            </button>
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                padding: "6px 8px",
+                borderRadius: 7,
+                border: "1px solid var(--color-border)",
+                background: "transparent",
+                cursor: "pointer",
+                color: "var(--color-text-secondary)",
+                display: "flex",
+                alignItems: "center",
+                transition: "all 0.15s",
+              }}
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+
+            {/* View site */}
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 12px",
+                borderRadius: 7,
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--color-text-secondary)",
+                textDecoration: "none",
+                border: "1px solid var(--color-border)",
+                transition: "all 0.15s",
+              }}
+            >
+              <ExternalLink size={12} />
+              {lang === "en" ? "View Site" : "Lihat Situs"}
+            </a>
+          </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            overflowX: "hidden",
+            padding: "clamp(24px, 3vw, 36px) clamp(20px, 3vw, 32px)",
+          }}
+        >
           <Outlet />
         </main>
       </div>

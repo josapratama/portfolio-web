@@ -1,8 +1,17 @@
-﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminAPI } from "@/api/admin";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Link2, ExternalLink } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Link2,
+  ExternalLink,
+  X,
+  Navigation,
+} from "lucide-react";
+import { useLanguageStore } from "@/store/languageStore";
 
 interface NavItem {
   id: string;
@@ -21,8 +30,79 @@ const BLANK: Partial<NavItem> = {
   sort_order: 0,
 };
 
+function FieldLabel({ text }: { text: string }) {
+  return (
+    <label
+      style={{
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+        color: "var(--color-text-muted)",
+        display: "block",
+        marginBottom: 8,
+      }}
+    >
+      {text}
+    </label>
+  );
+}
+
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        cursor: "pointer",
+      }}
+    >
+      <div
+        onClick={() => onChange(!checked)}
+        style={{
+          position: "relative",
+          width: 36,
+          height: 20,
+          borderRadius: 999,
+          background: checked ? "var(--color-accent)" : "var(--color-border)",
+          transition: "background 0.2s",
+          flexShrink: 0,
+          cursor: "pointer",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 2,
+            left: checked ? 18 : 2,
+            width: 16,
+            height: 16,
+            borderRadius: "50%",
+            background: "white",
+            transition: "left 0.2s",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          }}
+        />
+      </div>
+      <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
+        {label}
+      </span>
+    </label>
+  );
+}
+
 export default function NavigationPage() {
   const qc = useQueryClient();
+  const { lang } = useLanguageStore();
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["admin-navigation"],
     queryFn: adminAPI.getNavigation,
@@ -30,28 +110,33 @@ export default function NavigationPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<NavItem>>(BLANK);
 
-  const createMutation = useMutation({
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["admin-navigation"] });
+    qc.invalidateQueries({ queryKey: ["navigation"] });
+  };
+
+  const createM = useMutation({
     mutationFn: (data: Partial<NavItem>) => adminAPI.createNavItem(data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-navigation"] });
-      toast.success("Item created");
+      invalidate();
+      toast.success(lang === "en" ? "Item created" : "Item dibuat");
       setEditing(null);
     },
   });
-  const updateMutation = useMutation({
+  const updateM = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<NavItem> }) =>
       adminAPI.updateNavItem(id, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-navigation"] });
-      toast.success("Item updated");
+      invalidate();
+      toast.success(lang === "en" ? "Updated" : "Diperbarui");
       setEditing(null);
     },
   });
-  const deleteMutation = useMutation({
+  const deleteM = useMutation({
     mutationFn: adminAPI.deleteNavItem,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-navigation"] });
-      toast.success("Deleted");
+      invalidate();
+      toast.success(lang === "en" ? "Deleted" : "Dihapus");
     },
   });
 
@@ -63,178 +148,377 @@ export default function NavigationPage() {
     setForm({ ...item });
     setEditing(item.id);
   };
-  const handleSave = () => {
-    if (editing === "new") createMutation.mutate(form);
-    else updateMutation.mutate({ id: editing!, data: form });
+  const handleSave = () =>
+    editing === "new"
+      ? createM.mutate(form)
+      : updateM.mutate({ id: editing!, data: form });
+
+  if (isLoading)
+    return (
+      <div className="admin-page">
+        <div className="skeleton" style={{ height: 200, borderRadius: 12 }} />
+      </div>
+    );
+
+  const cardStyle = {
+    background: "var(--color-surface-card)",
+    border: "1px solid var(--color-border)",
+    borderRadius: 16,
+    backdropFilter: "blur(16px)",
+    overflow: "hidden" as const,
   };
 
-  if (isLoading) return <div className="skeleton h-64 rounded-xl" />;
-
   return (
-    <div>
-      <div className="flex items-start justify-between mb-8">
+    <div className="admin-page">
+      <div className="admin-page-header">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Navigation</h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Manage public site navigation links
+          <h1 className="admin-page-title">
+            {lang === "en" ? "Navigation" : "Navigasi"}
+          </h1>
+          <p className="admin-page-subtitle">
+            {lang === "en"
+              ? "Manage public site navigation links"
+              : "Kelola tautan navigasi situs publik"}
           </p>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus size={16} /> Add Item
+        <button onClick={openCreate} className="btn-primary" style={{ gap: 6 }}>
+          <Plus size={15} />
+          {lang === "en" ? "Add Item" : "Tambah Item"}
         </button>
       </div>
 
-      {/* Form modal */}
+      {/* Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4">
-          <div className="card-glass w-full max-w-md p-5 sm:p-8 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="font-bold text-text-primary">
-              {editing === "new" ? "Add" : "Edit"} Nav Item
-            </h2>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-widest text-text-muted block mb-2">
-                Label (EN)
-              </label>
-              <input
-                className="input-cyber"
-                value={form.label?.en || ""}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    label: { en: e.target.value, id: p.label?.id ?? "" },
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-widest text-text-muted block mb-2">
-                Label (ID)
-              </label>
-              <input
-                className="input-cyber"
-                value={form.label?.id || ""}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    label: { en: p.label?.en ?? "", id: e.target.value },
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-widest text-text-muted block mb-2">
-                Href
-              </label>
-              <input
-                className="input-cyber"
-                value={form.href || ""}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, href: e.target.value }))
-                }
-                placeholder="/about"
-              />
-            </div>
-            <div className="flex gap-6">
-              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!form.is_external}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      is_external: e.target.checked,
-                    }))
-                  }
-                />
-                External link
-              </label>
-              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!!form.is_visible}
-                  onChange={(e) =>
-                    setForm((p) => ({
-                      ...p,
-                      is_visible: e.target.checked,
-                    }))
-                  }
-                />
-                Visible
-              </label>
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-widest text-text-muted block mb-2">
-                Sort Order
-              </label>
-              <input
-                type="number"
-                className="input-cyber"
-                value={form.sort_order || 0}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    sort_order: parseInt(e.target.value),
-                  }))
-                }
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleSave}
-                className="btn-primary flex-1 justify-center"
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.75)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              ...cardStyle,
+              width: "100%",
+              maxWidth: 480,
+              padding: "clamp(20px, 3vw, 32px)",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 24,
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "var(--color-text-primary)",
+                }}
               >
-                Save
-              </button>
+                {editing === "new"
+                  ? lang === "en"
+                    ? "Add Nav Item"
+                    : "Tambah Item Nav"
+                  : lang === "en"
+                    ? "Edit Nav Item"
+                    : "Edit Item Nav"}
+              </h2>
               <button
                 onClick={() => setEditing(null)}
-                className="btn-secondary flex-1 justify-center"
+                style={{
+                  padding: 6,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: "var(--color-text-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  borderRadius: 6,
+                }}
               >
-                Cancel
+                <X size={16} />
               </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <FieldLabel
+                  text={`${lang === "en" ? "Label" : "Label"} (EN)`}
+                />
+                <input
+                  className="input-cyber"
+                  value={form.label?.en || ""}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      label: { en: e.target.value, id: p.label?.id ?? "" },
+                    }))
+                  }
+                  placeholder={lang === "en" ? "e.g. About" : "mis. Tentang"}
+                />
+              </div>
+              <div>
+                <FieldLabel
+                  text={`${lang === "en" ? "Label" : "Label"} (ID)`}
+                />
+                <input
+                  className="input-cyber"
+                  value={form.label?.id || ""}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      label: { en: p.label?.en ?? "", id: e.target.value },
+                    }))
+                  }
+                  placeholder={lang === "en" ? "e.g. Tentang" : "mis. Tentang"}
+                />
+              </div>
+              <div>
+                <FieldLabel text="Href" />
+                <input
+                  className="input-cyber"
+                  value={form.href || ""}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, href: e.target.value }))
+                  }
+                  placeholder="/about"
+                />
+              </div>
+              <div>
+                <FieldLabel text={lang === "en" ? "Sort Order" : "Urutan"} />
+                <input
+                  type="number"
+                  className="input-cyber"
+                  value={form.sort_order || 0}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      sort_order: parseInt(e.target.value),
+                    }))
+                  }
+                />
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+                <Toggle
+                  checked={!!form.is_external}
+                  onChange={(v) => setForm((p) => ({ ...p, is_external: v }))}
+                  label={lang === "en" ? "External link" : "Tautan eksternal"}
+                />
+                <Toggle
+                  checked={!!form.is_visible}
+                  onChange={(v) => setForm((p) => ({ ...p, is_visible: v }))}
+                  label={lang === "en" ? "Visible" : "Tampil"}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  paddingTop: 16,
+                  borderTop: "1px solid var(--color-border)",
+                }}
+              >
+                <button
+                  onClick={handleSave}
+                  disabled={createM.isPending || updateM.isPending}
+                  className="btn-primary"
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  {createM.isPending || updateM.isPending
+                    ? lang === "en"
+                      ? "Saving..."
+                      : "Menyimpan..."
+                    : lang === "en"
+                      ? "Save"
+                      : "Simpan"}
+                </button>
+                <button
+                  onClick={() => setEditing(null)}
+                  className="btn-secondary"
+                >
+                  {lang === "en" ? "Cancel" : "Batal"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="card-glass divide-y divide-border">
-        {(items as NavItem[]).map((item) => (
-          <div key={item.id} className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              {item.is_external ? (
-                <ExternalLink size={14} className="text-text-muted" />
-              ) : (
-                <Link2 size={14} className="text-accent" />
-              )}
-              <div>
-                <p className="text-sm font-medium text-text-primary">
-                  {item.label?.en}
-                </p>
-                <p className="text-xs text-text-muted font-mono">{item.href}</p>
-              </div>
-              {!item.is_visible && (
-                <span className="tag text-xs text-text-muted">Hidden</span>
-              )}
+      <div style={cardStyle}>
+        {(items as NavItem[]).length === 0 ? (
+          <div
+            style={{
+              padding: "48px 24px",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              <Navigation size={20} />
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => openEdit(item)}
-                className="p-2 rounded text-text-muted hover:text-accent-bright hover:bg-surface-2 transition-all"
-              >
-                <Pencil size={14} />
-              </button>
-              <button
-                onClick={() => deleteMutation.mutate(item.id)}
-                className="p-2 rounded text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
+            <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
+              {lang === "en" ? "No nav items yet." : "Belum ada item navigasi."}
+            </p>
           </div>
-        ))}
-        {(items as NavItem[]).length === 0 && (
-          <p className="text-center py-10 text-sm text-text-muted">
-            No nav items yet
-          </p>
+        ) : (
+          (items as NavItem[]).map((item, idx, arr) => (
+            <div
+              key={item.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "14px 20px",
+                borderBottom:
+                  idx < arr.length - 1
+                    ? "1px solid var(--color-border)"
+                    : "none",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(59,130,246,0.03)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9,
+                    background: item.is_external
+                      ? "rgba(99,102,241,0.1)"
+                      : "rgba(59,130,246,0.1)",
+                    border: `1px solid ${item.is_external ? "rgba(99,102,241,0.2)" : "rgba(59,130,246,0.2)"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: item.is_external ? "#a5b4fc" : "var(--color-accent)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {item.is_external ? (
+                    <ExternalLink size={14} />
+                  ) : (
+                    <Link2 size={14} />
+                  )}
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "var(--color-text-primary)",
+                      marginBottom: 2,
+                    }}
+                  >
+                    {item.label?.en}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "var(--color-text-muted)",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {item.href}
+                  </p>
+                </div>
+                {!item.is_visible && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: 999,
+                      background: "rgba(148,163,184,0.08)",
+                      border: "1px solid rgba(148,163,184,0.2)",
+                      color: "var(--color-text-muted)",
+                    }}
+                  >
+                    {lang === "en" ? "Hidden" : "Tersembunyi"}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[
+                  {
+                    icon: <Pencil size={13} />,
+                    onClick: () => openEdit(item),
+                    hover: "accent",
+                  },
+                  {
+                    icon: <Trash2 size={13} />,
+                    onClick: () => {
+                      if (confirm(lang === "en" ? "Delete?" : "Hapus?"))
+                        deleteM.mutate(item.id);
+                    },
+                    hover: "red",
+                  },
+                ].map((btn, i) => (
+                  <button
+                    key={i}
+                    onClick={btn.onClick}
+                    style={{
+                      padding: 7,
+                      borderRadius: 7,
+                      border: "1px solid var(--color-border)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      color: "var(--color-text-muted)",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color =
+                        btn.hover === "red"
+                          ? "#f87171"
+                          : "var(--color-accent-bright)";
+                      e.currentTarget.style.borderColor =
+                        btn.hover === "red"
+                          ? "rgba(248,113,113,0.4)"
+                          : "var(--color-accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--color-text-muted)";
+                      e.currentTarget.style.borderColor = "var(--color-border)";
+                    }}
+                  >
+                    {btn.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>
