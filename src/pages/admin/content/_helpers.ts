@@ -45,9 +45,9 @@ export function useAdminForm(
       ...p,
       [key]: { ...((p[key] as Record<string, unknown>) ?? {}), [l]: value },
     }));
-  const save = (e?: { preventDefault(): void }) => {
+  const save = (e?: { preventDefault(): void }, overrides?: FormData) => {
     e?.preventDefault();
-    mutation.mutate(values);
+    mutation.mutate(overrides ? { ...values, ...overrides } : values);
   };
   return {
     values,

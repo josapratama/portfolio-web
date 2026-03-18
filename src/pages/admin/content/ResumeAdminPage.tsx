@@ -155,8 +155,7 @@ export default function ResumeAdminPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleChange("cv_source", "url");
-            save();
+            save(undefined, { ...values, cv_source: "url" });
           }}
         >
           <FormCard>
@@ -261,9 +260,11 @@ export default function ResumeAdminPage() {
               <button
                 type="button"
                 onClick={() => {
-                  handleChange("cv_source", "builder");
-                  handleChange("enable_cv_download", true);
-                  save();
+                  save(undefined, {
+                    ...values,
+                    cv_source: "builder",
+                    enable_cv_download: true,
+                  });
                 }}
                 style={{
                   padding: "7px 16px",
