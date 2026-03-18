@@ -94,35 +94,6 @@ export default function ResumeAdminPage() {
         </div>
       </div>
 
-      {/* Status bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 16px",
-          borderRadius: 10,
-          background: showButton
-            ? "rgba(34,197,94,0.07)"
-            : "rgba(239,68,68,0.07)",
-          border: `1px solid ${showButton ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}`,
-          fontSize: 13,
-          color: showButton
-            ? "var(--color-success, #22c55e)"
-            : "var(--color-error, #ef4444)",
-          marginBottom: 20,
-        }}
-      >
-        <CheckCircle2 size={14} />
-        {showButton
-          ? uiLang === "en"
-            ? `Download button visible — source: ${activeSource === "url" ? "External URL" : "CV Builder"}`
-            : `Tombol unduh terlihat — sumber: ${activeSource === "url" ? "URL Eksternal" : "CV Builder"}`
-          : uiLang === "en"
-            ? "Download button is hidden from the public site"
-            : "Tombol unduh disembunyikan dari situs publik"}
-      </div>
-
       {/* Tabs */}
       <div
         style={{
