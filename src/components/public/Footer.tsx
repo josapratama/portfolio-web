@@ -6,7 +6,7 @@ import {
   FaInstagram,
   FaWhatsapp,
 } from "react-icons/fa6";
-import { Mail, Globe, ExternalLink, ArrowUpRight } from "lucide-react";
+import { Mail, Globe, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { publicAPI } from "@/api/public";
 import { useLanguageStore } from "@/store/languageStore";
@@ -240,84 +240,6 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
-
-          {/* Connect */}
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "var(--color-text-muted)",
-                marginBottom: 16,
-              }}
-            >
-              {lang === "en" ? "Connect" : "Terhubung"}
-            </p>
-            {(socialLinks || []).length > 0 ? (
-              <ul
-                style={{
-                  listStyle: "none",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                }}
-              >
-                {(socialLinks || []).map((link) => (
-                  <li key={link.id}>
-                    <a
-                      href={link.url}
-                      target={link.open_in_new_tab ? "_blank" : undefined}
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: 13,
-                        color: "var(--color-text-secondary)",
-                        textDecoration: "none",
-                        transition: "color 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.color =
-                          "var(--color-accent-bright)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLAnchorElement).style.color =
-                          "var(--color-text-secondary)";
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "var(--color-text-muted)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {PLATFORM_ICONS[link.platform.toLowerCase()] || (
-                          <ExternalLink size={14} />
-                        )}
-                      </span>
-                      {link.label}
-                      {link.open_in_new_tab && (
-                        <ArrowUpRight size={11} style={{ opacity: 0.5 }} />
-                      )}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p
-                style={{
-                  fontSize: 12,
-                  color: "var(--color-text-muted)",
-                  fontStyle: "italic",
-                }}
-              >
-                {lang === "en" ? "No links yet." : "Belum ada link."}
-              </p>
-            )}
           </div>
         </div>
 
