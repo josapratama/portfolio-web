@@ -1,15 +1,8 @@
 import { useState } from "react";
 import { adminAPI } from "@/api/admin";
 import { useLanguageStore } from "@/store/languageStore";
-import {
-  useAdminForm,
-  str,
-  loc,
-  FieldLabel,
-  SaveBtn,
-  FormCard,
-  LangPill,
-} from "./_shared";
+import { useAdminForm, str, loc } from "./_helpers";
+import { FieldLabel, SaveBtn, FormCard, LangPill } from "./_shared";
 
 export default function AboutPage() {
   const { lang: uiLang } = useLanguageStore();

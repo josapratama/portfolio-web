@@ -2,17 +2,8 @@ import { useState, lazy, Suspense } from "react";
 import { adminAPI } from "@/api/admin";
 import { useLanguageStore } from "@/store/languageStore";
 import { Link2, FileText } from "lucide-react";
-import {
-  useAdminForm,
-  str,
-  loc,
-  bool,
-  Toggle,
-  FieldLabel,
-  SaveBtn,
-  FormCard,
-  LangPill,
-} from "./_shared";
+import { useAdminForm, str, loc, bool } from "./_helpers";
+import { Toggle, FieldLabel, SaveBtn, FormCard, LangPill } from "./_shared";
 
 const CVBuilder = lazy(() => import("@/features/cv/CVBuilder"));
 

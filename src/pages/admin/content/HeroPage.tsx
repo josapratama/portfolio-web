@@ -1,17 +1,8 @@
 import { useState } from "react";
 import { adminAPI } from "@/api/admin";
 import { useLanguageStore } from "@/store/languageStore";
-import {
-  useAdminForm,
-  str,
-  loc,
-  bool,
-  Toggle,
-  FieldLabel,
-  SaveBtn,
-  FormCard,
-  LangPill,
-} from "./_shared";
+import { useAdminForm, str, loc, bool } from "./_helpers";
+import { Toggle, FieldLabel, SaveBtn, FormCard, LangPill } from "./_shared";
 
 export default function HeroPage() {
   const { lang: uiLang } = useLanguageStore();
