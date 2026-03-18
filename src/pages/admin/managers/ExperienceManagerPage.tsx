@@ -113,7 +113,7 @@ function ExperienceForm({
   setForm: React.Dispatch<React.SetStateAction<ExpForm>>;
   editId: string | null;
   isPending: boolean;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: { preventDefault(): void }) => void;
   onCancel: () => void;
   uiLang: string;
 }) {
@@ -427,7 +427,7 @@ export default function ExperienceManagerPage() {
       .catch(() => toast.error("Failed"));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     if (!form.org_en || !form.role_en || !form.start_date) return;
     const payload = toPayload(form);

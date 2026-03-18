@@ -210,6 +210,7 @@ export interface ResumeSettings {
   enable_cv_download: boolean;
   cv_url: string;
   cv_url_id: string;
+  cv_source: "url" | "builder";
   button_label: LocalizedString;
 }
 

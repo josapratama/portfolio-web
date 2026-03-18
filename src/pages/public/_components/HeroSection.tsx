@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ExternalLink, MapPin } from "lucide-react";
+import { ArrowRight, ExternalLink, MapPin, Download } from "lucide-react";
 import { getText } from "@/types";
 import { PLATFORM_ICONS } from "./platformIcons";
-import type { HeroContent, SocialLink, Lang } from "@/types";
+import type { HeroContent, SocialLink, Lang, ResumeSettings } from "@/types";
 
 interface Props {
   hero: HeroContent;
@@ -12,6 +12,7 @@ interface Props {
   ctaPrimary: string;
   ctaSecondary: string;
   socialLinks: SocialLink[];
+  resume?: ResumeSettings | null;
 }
 
 export default function HeroSection({
@@ -22,6 +23,7 @@ export default function HeroSection({
   ctaPrimary,
   ctaSecondary,
   socialLinks,
+  resume,
 }: Props) {
   return (
     <section
@@ -156,6 +158,21 @@ export default function HeroSection({
               <Link to="/contact" className="btn-secondary">
                 {ctaSecondary}
               </Link>
+              {resume?.enable_cv_download &&
+                resume.cv_url &&
+                resume.cv_source === "url" && (
+                  <a
+                    href={resume.cv_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary"
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <Download size={14} />
+                    {getText(resume.button_label, lang) ||
+                      (lang === "en" ? "Download CV" : "Unduh CV")}
+                  </a>
+                )}
             </div>
             {socialLinks.length > 0 && (
               <div

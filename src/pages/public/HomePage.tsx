@@ -63,6 +63,11 @@ export default function HomePage() {
     queryFn: publicAPI.getContactSettings,
     staleTime: 10 * 60 * 1000,
   });
+  const { data: resume } = useQuery({
+    queryKey: ["resume"],
+    queryFn: publicAPI.getResume,
+    staleTime: 10 * 60 * 1000,
+  });
 
   if (heroLoading) return <PageLoadSkeleton />;
 
@@ -101,6 +106,7 @@ export default function HomePage() {
           ctaPrimary={ctaPrimary}
           ctaSecondary={ctaSecondary}
           socialLinks={links}
+          resume={resume}
         />
       )}
 

@@ -45,7 +45,7 @@ export function useAdminForm(
       ...p,
       [key]: { ...((p[key] as Record<string, unknown>) ?? {}), [l]: value },
     }));
-  const save = (e?: React.FormEvent) => {
+  const save = (e?: { preventDefault(): void }) => {
     e?.preventDefault();
     mutation.mutate(values);
   };

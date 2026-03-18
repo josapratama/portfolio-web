@@ -72,7 +72,7 @@ function SocialLinkForm({
   setForm: React.Dispatch<React.SetStateAction<LinkForm>>;
   editId: string | null;
   isPending: boolean;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: { preventDefault(): void }) => void;
   onCancel: () => void;
   lang: string;
 }) {
@@ -266,7 +266,7 @@ export default function SocialLinksManagerPage() {
       toast.error(lang === "en" ? "Failed to delete" : "Gagal menghapus"),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     if (!form.url) return;
     const label =

@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
 
   if (isAuthenticated) return <Navigate to="/admin" replace />;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError("");
     setLoading(true);

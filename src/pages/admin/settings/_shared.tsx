@@ -49,7 +49,7 @@ export function SettingsForm({
   const handleChange = (key: string, value: unknown) =>
     setLocal((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     mutation.mutate(values);
   };
