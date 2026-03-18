@@ -26,7 +26,7 @@ export function useAdminForm(
 ) {
   const qc = useQueryClient();
   const { lang } = useLanguageStore();
-  const { data, isLoading } = useQuery({ queryKey, queryFn });
+  const { data, isLoading, isSuccess } = useQuery({ queryKey, queryFn });
   const [local, setLocal] = useState<FormData>({});
   const values: FormData = { ...(data as FormData), ...local };
   const mutation = useMutation({
@@ -49,5 +49,13 @@ export function useAdminForm(
     e?.preventDefault();
     mutation.mutate(values);
   };
-  return { values, isLoading, mutation, handleChange, handleLocChange, save };
+  return {
+    values,
+    isLoading,
+    isSuccess,
+    mutation,
+    handleChange,
+    handleLocChange,
+    save,
+  };
 }

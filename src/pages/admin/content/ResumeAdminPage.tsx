@@ -13,14 +13,21 @@ export default function ResumeAdminPage() {
   // null = user hasn't manually switched tabs yet
   const [tab, setTab] = useState<"url" | "builder" | null>(null);
 
-  const { values, isLoading, mutation, handleChange, handleLocChange, save } =
-    useAdminForm(
-      ["admin", "resume"],
-      () => adminAPI.getResumeSettings(),
-      (data) => adminAPI.updateResumeSettings(data),
-    );
+  const {
+    values,
+    isLoading,
+    isSuccess,
+    mutation,
+    handleChange,
+    handleLocChange,
+    save,
+  } = useAdminForm(
+    ["admin", "resume"],
+    () => adminAPI.getResumeSettings(),
+    (data) => adminAPI.updateResumeSettings(data),
+  );
 
-  if (isLoading)
+  if (isLoading || !isSuccess)
     return (
       <div className="admin-page">
         <div className="skeleton" style={{ height: 32, width: 200 }} />
