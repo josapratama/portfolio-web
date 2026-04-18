@@ -11,15 +11,24 @@ interface ThemeState {
 
 export function applyTheme(theme: Theme) {
   const root = document.documentElement;
+  const body = document.body;
+
   if (theme === "dark") {
     root.classList.add("dark");
     root.classList.remove("light");
+    root.setAttribute("data-theme", "dark");
+    body.style.backgroundColor = "";
+    body.style.color = "";
   } else {
     root.classList.add("light");
     root.classList.remove("dark");
+    root.setAttribute("data-theme", "light");
+    // Force light background directly in case CSS class doesn't apply fast enough
+    body.style.backgroundColor = "#f0f4ff";
+    body.style.color = "#0f172a";
   }
-  document.body.classList.toggle("light", theme === "light");
-  document.body.classList.toggle("dark", theme === "dark");
+  body.classList.toggle("light", theme === "light");
+  body.classList.toggle("dark", theme === "dark");
 }
 
 export const useThemeStore = create<ThemeState>()(

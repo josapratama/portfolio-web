@@ -70,6 +70,7 @@ body {
 /* ── Light theme ── */
 html.light {
   color-scheme: light;
+  background-color: #f0f4ff;
   --color-background: #f0f4ff;
   --color-surface: #ffffff;
   --color-surface-2: #f0f2f8;
