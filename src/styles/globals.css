@@ -51,6 +51,9 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent Chrome Android from force-applying dark mode filter */
+  color-scheme: dark light;
+  forced-color-adjust: none;
 }
 
 body {
@@ -66,6 +69,7 @@ body {
 
 /* ── Light theme ── */
 html.light {
+  color-scheme: light;
   --color-background: #f0f4ff;
   --color-surface: #ffffff;
   --color-surface-2: #f0f2f8;
@@ -79,6 +83,10 @@ html.light {
   --color-text-muted: #94a3b8;
   --color-accent-glow: rgba(59, 130, 246, 0.1);
   --color-accent-glow-strong: rgba(59, 130, 246, 0.2);
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 html.light body {
