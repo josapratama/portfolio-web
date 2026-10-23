@@ -58,28 +58,42 @@ export function CVDocument({
   template?: CVTemplate;
   pageSize?: CVPageSize;
 }) {
+  const safeCV: CVData = {
+    name: cv?.name || "",
+    title: cv?.title || "",
+    email: cv?.email || "",
+    phone: cv?.phone || "",
+    location: cv?.location || "",
+    website: cv?.website || "",
+    photo_url: cv?.photo_url || "",
+    summary: cv?.summary || "",
+    experiences: Array.isArray(cv?.experiences) ? cv.experiences : [],
+    skills: Array.isArray(cv?.skills) ? cv.skills : [],
+    education: Array.isArray(cv?.education) ? cv.education : [],
+  };
+
   const size = pageSize;
-  if (template === "minimal") return <MinimalTemplate cv={cv} size={size} />;
-  if (template === "modern") return <ModernTemplate cv={cv} size={size} />;
-  if (template === "bold") return <BoldTemplate cv={cv} size={size} />;
-  if (template === "elegant") return <ElegantTemplate cv={cv} size={size} />;
-  if (template === "tech") return <TechTemplate cv={cv} size={size} />;
+  if (template === "minimal") return <MinimalTemplate cv={safeCV} size={size} />;
+  if (template === "modern") return <ModernTemplate cv={safeCV} size={size} />;
+  if (template === "bold") return <BoldTemplate cv={safeCV} size={size} />;
+  if (template === "elegant") return <ElegantTemplate cv={safeCV} size={size} />;
+  if (template === "tech") return <TechTemplate cv={safeCV} size={size} />;
   if (template === "executive")
-    return <ExecutiveTemplate cv={cv} size={size} />;
-  if (template === "creative") return <CreativeTemplate cv={cv} size={size} />;
-  if (template === "compact") return <CompactTemplate cv={cv} size={size} />;
-  if (template === "timeline") return <TimelineTemplate cv={cv} size={size} />;
-  if (template === "academic") return <AcademicTemplate cv={cv} size={size} />;
-  if (template === "nordic") return <NordicTemplate cv={cv} size={size} />;
-  if (template === "dark") return <DarkTemplate cv={cv} size={size} />;
-  if (template === "split") return <SplitTemplate cv={cv} size={size} />;
+    return <ExecutiveTemplate cv={safeCV} size={size} />;
+  if (template === "creative") return <CreativeTemplate cv={safeCV} size={size} />;
+  if (template === "compact") return <CompactTemplate cv={safeCV} size={size} />;
+  if (template === "timeline") return <TimelineTemplate cv={safeCV} size={size} />;
+  if (template === "academic") return <AcademicTemplate cv={safeCV} size={size} />;
+  if (template === "nordic") return <NordicTemplate cv={safeCV} size={size} />;
+  if (template === "dark") return <DarkTemplate cv={safeCV} size={size} />;
+  if (template === "split") return <SplitTemplate cv={safeCV} size={size} />;
   if (template === "corporate")
-    return <CorporateTemplate cv={cv} size={size} />;
+    return <CorporateTemplate cv={safeCV} size={size} />;
   if (template === "infographic")
-    return <InfographicTemplate cv={cv} size={size} />;
-  if (template === "pastel") return <PastelTemplate cv={cv} size={size} />;
-  if (template === "mono") return <MonoTemplate cv={cv} size={size} />;
-  if (template === "midnight") return <MidnightTemplate cv={cv} size={size} />;
-  if (template === "gradient") return <GradientTemplate cv={cv} size={size} />;
-  return <ClassicTemplate cv={cv} size={size} />;
+    return <InfographicTemplate cv={safeCV} size={size} />;
+  if (template === "pastel") return <PastelTemplate cv={safeCV} size={size} />;
+  if (template === "mono") return <MonoTemplate cv={safeCV} size={size} />;
+  if (template === "midnight") return <MidnightTemplate cv={safeCV} size={size} />;
+  if (template === "gradient") return <GradientTemplate cv={safeCV} size={size} />;
+  return <ClassicTemplate cv={safeCV} size={size} />;
 }

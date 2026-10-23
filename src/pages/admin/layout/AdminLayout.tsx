@@ -374,7 +374,7 @@ export default function AdminLayout() {
       .then((res) => {
         const { access_token, admin } = res.data.data;
         setAccessToken(access_token);
-        setAdmin(admin);
+        if (admin) setAdmin(admin);
       })
       .catch(() => {
         // No valid session, will redirect to login

@@ -45,8 +45,11 @@ export default function ContactSettingsPage() {
             <input
               className="input-cyber"
               type="email"
-              value={str(values, "email")}
-              onChange={(e) => handleChange("email", e.target.value)}
+              value={str(values, "recipient_email") || str(values, "email")}
+              onChange={(e) => {
+                handleChange("recipient_email", e.target.value);
+                handleChange("email", e.target.value);
+              }}
             />
           </div>
 
@@ -82,10 +85,11 @@ export default function ContactSettingsPage() {
             />
             <input
               className="input-cyber"
-              value={loc(values, "heading", contentLang)}
-              onChange={(e) =>
-                handleLocChange("heading", contentLang, e.target.value)
-              }
+              value={loc(values, "section_title", contentLang) || loc(values, "heading", contentLang)}
+              onChange={(e) => {
+                handleLocChange("section_title", contentLang, e.target.value);
+                handleLocChange("heading", contentLang, e.target.value);
+              }}
             />
           </div>
 
@@ -96,16 +100,24 @@ export default function ContactSettingsPage() {
             <textarea
               className="input-cyber"
               rows={3}
-              value={loc(values, "subheading", contentLang)}
-              onChange={(e) =>
-                handleLocChange("subheading", contentLang, e.target.value)
-              }
+              value={loc(values, "section_subtitle", contentLang) || loc(values, "subheading", contentLang)}
+              onChange={(e) => {
+                handleLocChange("section_subtitle", contentLang, e.target.value);
+                handleLocChange("subheading", contentLang, e.target.value);
+              }}
             />
           </div>
 
           <Toggle
-            checked={bool(values, "form_enabled")}
-            onChange={(v) => handleChange("form_enabled", v)}
+            checked={
+              values["enable_contact_form"] !== undefined
+                ? bool(values, "enable_contact_form")
+                : bool(values, "form_enabled")
+            }
+            onChange={(v) => {
+              handleChange("enable_contact_form", v);
+              handleChange("form_enabled", v);
+            }}
             label={
               uiLang === "en"
                 ? "Enable contact form"

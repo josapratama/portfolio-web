@@ -41,10 +41,16 @@ export function useAdminForm(
   const handleChange = (key: string, value: unknown) =>
     setLocal((p) => ({ ...p, [key]: value }));
   const handleLocChange = (key: string, l: string, value: string) =>
-    setLocal((p) => ({
-      ...p,
-      [key]: { ...((p[key] as Record<string, unknown>) ?? {}), [l]: value },
-    }));
+    setLocal((p) => {
+      const existing =
+        (p[key] as Record<string, unknown>) ??
+        ((data as FormData)?.[key] as Record<string, unknown>) ??
+        {};
+      return {
+        ...p,
+        [key]: { ...existing, [l]: value },
+      };
+    });
   const save = (e?: { preventDefault(): void }, overrides?: FormData) => {
     e?.preventDefault();
     mutation.mutate(overrides ? { ...values, ...overrides } : values);

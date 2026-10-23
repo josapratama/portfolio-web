@@ -80,13 +80,14 @@ function BlogPostModal({
   const [contentLang, setContentLang] = useState<"en" | "id">("en");
 
   const addTag = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm((p) => ({ ...p, tags: [...p.tags, tagInput.trim()] }));
+    const currentTags = form.tags ?? [];
+    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
+      setForm((p) => ({ ...p, tags: [...(p.tags ?? []), tagInput.trim()] }));
       setTagInput("");
     }
   };
   const removeTag = (tag: string) =>
-    setForm((p) => ({ ...p, tags: p.tags.filter((t) => t !== tag) }));
+    setForm((p) => ({ ...p, tags: (p.tags ?? []).filter((t) => t !== tag) }));
 
   return (
     <ModalShell
@@ -230,7 +231,7 @@ function BlogPostModal({
             </button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {form.tags.map((tag) => (
+            {(form.tags ?? []).map((tag) => (
               <span
                 key={tag}
                 style={{
@@ -351,8 +352,8 @@ export default function BlogManagerPage() {
 
   const openEdit = async (id: string) => {
     try {
-      const data = await adminAPI.getBlogPost(id);
-      setForm(data as BlogPostForm);
+      const data = (await adminAPI.getBlogPost(id)) as BlogPostForm;
+      setForm({ ...data, tags: data.tags ?? [] });
       setEditing(id);
     } catch {
       toast.error("Failed to load post");

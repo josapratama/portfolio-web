@@ -258,7 +258,7 @@ function CategoryCard({
               color: "var(--color-accent-bright)",
             }}
           >
-            {cat.skills.length}
+            {(cat.skills ?? []).length}
           </span>
         </div>
         <IconBtn
@@ -273,7 +273,7 @@ function CategoryCard({
       </div>
       {isOpen && (
         <div style={{ borderTop: "1px solid var(--color-border)" }}>
-          {cat.skills.length === 0 ? (
+          {(cat.skills ?? []).length === 0 ? (
             <p
               style={{
                 fontSize: 12,
@@ -287,7 +287,7 @@ function CategoryCard({
                 : "Belum ada skill di kategori ini"}
             </p>
           ) : (
-            cat.skills.map((skill: Skill, idx: number) => (
+            (cat.skills ?? []).map((skill: Skill, idx: number) => (
               <div
                 key={skill.id}
                 style={{
@@ -296,7 +296,7 @@ function CategoryCard({
                   justifyContent: "space-between",
                   padding: "11px 18px",
                   borderBottom:
-                    idx < cat.skills.length - 1
+                    idx < (cat.skills ?? []).length - 1
                       ? "1px solid var(--color-border)"
                       : "none",
                   transition: "background 0.15s",
@@ -436,7 +436,7 @@ export default function SkillsManagerPage() {
         (old: SkillCategory[] | undefined) =>
           old?.map((cat) => ({
             ...cat,
-            skills: cat.skills.map((s) =>
+            skills: (cat.skills ?? []).map((s) =>
               s.id === id ? { ...s, is_featured: val } : s,
             ),
           })),

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
 const rawBase = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
-export const BASE_URL = rawBase.endsWith('/api') ? rawBase.slice(0, -4) : rawBase
+export const BASE_URL = rawBase.replace(/\/api(\/v1)?$/, '')
 
 // Public API client — no auth headers needed
 export const publicApi = axios.create({
@@ -42,7 +42,10 @@ adminApi.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const requestUrl = originalRequest?.url || ''
+    const isAuthEndpoint = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh')
+
+    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
@@ -61,15 +64,20 @@ adminApi.interceptors.response.use(
           {},
           { withCredentials: true }
         )
-        const newToken = res.data.data.access_token
-        useAuthStore.getState().setAccessToken(newToken)
-        processQueue(null, newToken)
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        const { access_token, admin } = res.data.data
+        useAuthStore.getState().setAccessToken(access_token)
+        if (admin) {
+          useAuthStore.getState().setAdmin(admin)
+        }
+        processQueue(null, access_token)
+        originalRequest.headers.Authorization = `Bearer ${access_token}`
         return adminApi(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)
         useAuthStore.getState().logout()
-        window.location.href = '/admin/login'
+        if (window.location.pathname !== '/admin/login') {
+          window.location.href = '/admin/login'
+        }
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false

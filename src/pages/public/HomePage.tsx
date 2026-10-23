@@ -82,8 +82,8 @@ export default function HomePage() {
   const featuredPosts = allPosts.filter((p) => p.is_featured).slice(0, 3);
   const recentExperiences = allExperiences.slice(0, 3);
   const featuredSkills = allSkills
-    .flatMap((cat) => cat.skills)
-    .filter((sk) => sk.is_featured);
+    .flatMap((cat) => cat.skills || [])
+    .filter((sk) => sk?.is_featured);
 
   const ctaPrimary =
     settings?.site?.cta_primary_label ||
@@ -114,7 +114,7 @@ export default function HomePage() {
         <StatsStrip
           yearsExp={about.years_of_experience || 0}
           projectCount={allProjects.length}
-          techCount={allSkills.flatMap((c) => c.skills).length}
+          techCount={allSkills.flatMap((c) => c.skills || []).length}
           articleCount={allPosts.length}
           lang={lang}
         />
