@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
 import { useLanguageStore } from "@/store/languageStore";
 import { adminAPI } from "@/api/admin";
+import { BASE_URL } from "@/api/client";
 import axios from "axios";
 import {
   LayoutDashboard,
@@ -368,7 +369,6 @@ export default function AdminLayout() {
   useEffect(() => {
     if (isInitialized) return;
     // Try to restore session via refresh token cookie
-    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
     axios
       .post(`${BASE_URL}/api/v1/auth/refresh`, {}, { withCredentials: true })
       .then((res) => {

@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { useAuthStore } from '@/store/authStore'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const rawBase = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
+export const BASE_URL = rawBase.endsWith('/api') ? rawBase.slice(0, -4) : rawBase
 
 // Public API client — no auth headers needed
 export const publicApi = axios.create({
