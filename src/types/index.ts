@@ -3,16 +3,18 @@
 export interface LocalizedString {
   en: string;
   id: string;
+  ja?: string;
+  [key: string]: string | undefined;
 }
 
-export type Lang = "en" | "id";
+export type Lang = "en" | "id" | "ja";
 
 export function getText(
   field: LocalizedString | undefined,
   lang: Lang,
 ): string {
   if (!field) return "";
-  return field[lang] || field.en || "";
+  return field[lang] || field.en || field.id || "";
 }
 
 // ============================================================

@@ -10,37 +10,37 @@ import { getText } from "@/types";
 const DEFAULT_NAV = [
   {
     id: "home",
-    label: { en: "Home", id: "Beranda" },
+    label: { en: "Home", id: "Beranda", ja: "ホーム" },
     href: "/",
     is_external: false,
   },
   {
     id: "about",
-    label: { en: "About", id: "Tentang" },
+    label: { en: "About", id: "Tentang", ja: "概要" },
     href: "/about",
     is_external: false,
   },
   {
     id: "projects",
-    label: { en: "Projects", id: "Proyek" },
+    label: { en: "Projects", id: "Proyek", ja: "プロジェクト" },
     href: "/projects",
     is_external: false,
   },
   {
     id: "experience",
-    label: { en: "Experience", id: "Pengalaman" },
+    label: { en: "Experience", id: "Pengalaman", ja: "経歴" },
     href: "/experience",
     is_external: false,
   },
   {
     id: "blog",
-    label: { en: "Blog", id: "Blog" },
+    label: { en: "Blog", id: "Blog", ja: "ブログ" },
     href: "/blog",
     is_external: false,
   },
   {
     id: "contact",
-    label: { en: "Contact", id: "Kontak" },
+    label: { en: "Contact", id: "Kontak", ja: "お問い合わせ" },
     href: "/contact",
     is_external: false,
   },
@@ -236,7 +236,7 @@ export default function Navbar() {
               {/* Language toggle */}
               {enableLangSwitcher && (
                 <button
-                  onClick={() => setLang(lang === "en" ? "id" : "en")}
+                  onClick={() => setLang(lang === "en" ? "id" : (lang === "id" ? "ja" : "en"))}
                   style={iconBtnStyle}
                   className="navbar-icon-btn"
                   title="Switch language"
@@ -249,7 +249,7 @@ export default function Navbar() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    {lang === "en" ? "ID" : "EN"}
+                    {lang.toUpperCase()}
                   </span>
                 </button>
               )}
@@ -425,7 +425,7 @@ export default function Navbar() {
             <div style={{ display: "flex", gap: 10 }}>
               {enableLangSwitcher && (
                 <button
-                  onClick={() => setLang(lang === "en" ? "id" : "en")}
+                  onClick={() => setLang(lang === "en" ? "id" : (lang === "id" ? "ja" : "en"))}
                   style={{
                     flex: 1,
                     display: "flex",
@@ -442,7 +442,7 @@ export default function Navbar() {
                     color: "var(--color-text-secondary)",
                   }}
                 >
-                  {lang === "en" ? "🇮🇩 Bahasa" : "🇬🇧 English"}
+                  {lang === "en" ? "🇮🇩 ID" : (lang === "id" ? "🇯🇵 JA" : "🇬🇧 EN")}
                 </button>
               )}
               {enableThemeSwitcher && (

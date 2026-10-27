@@ -69,12 +69,14 @@ export function FieldLabel({ text }: { text: string }) {
   );
 }
 
+import type { Lang } from "@/types";
+
 export function SaveBtn({
   pending,
   lang,
 }: {
   pending: boolean;
-  lang?: "en" | "id";
+  lang?: Lang;
 }) {
   return (
     <div style={{ paddingTop: 16, borderTop: "1px solid var(--color-border)" }}>
@@ -91,10 +93,12 @@ export function SaveBtn({
                 animation: "spin 0.7s linear infinite",
               }}
             />
-            {lang === "id" ? "Menyimpan..." : "Saving..."}
+            {lang === "id" ? "Menyimpan..." : (lang === "ja" ? "保存中..." : "Saving...")}
           </span>
         ) : lang === "id" ? (
           "Simpan Perubahan"
+        ) : lang === "ja" ? (
+          "変更を保存"
         ) : (
           "Save Changes"
         )}
